@@ -5,52 +5,52 @@ import { useRef, useEffect } from 'react';
 export default function GetStarted() {
   const router = useRouter();
 
-  // Animation values
-  const fadeImage = useRef(new Animated.Value(0)).current; // Main image fade
-  const slideLogo = useRef(new Animated.Value(-50)).current; // Logo slide from top
-  const fadeText1 = useRef(new Animated.Value(0)).current; // First text fade
-  const slideText1 = useRef(new Animated.Value(20)).current; // First text slide
-  const fadeText2 = useRef(new Animated.Value(0)).current; // Second text fade
-  const slideText2 = useRef(new Animated.Value(20)).current; // Second text slide
-  const scaleButton = useRef(new Animated.Value(0.8)).current; // Button scale
 
-  // Run animations on mount
+  const fadeImage = useRef(new Animated.Value(0)).current; 
+  const slideLogo = useRef(new Animated.Value(-50)).current; 
+  const fadeText1 = useRef(new Animated.Value(0)).current; 
+  const slideText1 = useRef(new Animated.Value(20)).current; 
+  const fadeText2 = useRef(new Animated.Value(0)).current; 
+  const slideText2 = useRef(new Animated.Value(20)).current; 
+  const scaleButton = useRef(new Animated.Value(0.8)).current; 
+
+  
   useEffect(() => {
     Animated.parallel([
-      // Main image fade-in
+      
       Animated.timing(fadeImage, {
         toValue: 1,
         duration: 1000,
         useNativeDriver: true,
       }),
-      // Logo slide-in
+   
       Animated.timing(slideLogo, {
         toValue: 0,
         duration: 800,
         useNativeDriver: true,
       }),
-      // Text 1 fade and slide
+      
       Animated.sequence([
-        Animated.delay(200), // Slight delay for staggered effect
+        Animated.delay(200), 
         Animated.parallel([
           Animated.timing(fadeText1, { toValue: 1, duration: 800, useNativeDriver: true }),
           Animated.timing(slideText1, { toValue: 0, duration: 800, useNativeDriver: true }),
         ]),
       ]),
-      // Text 2 fade and slide
+     
       Animated.sequence([
-        Animated.delay(400), // Longer delay for second text
+        Animated.delay(400), 
         Animated.parallel([
           Animated.timing(fadeText2, { toValue: 1, duration: 800, useNativeDriver: true }),
           Animated.timing(slideText2, { toValue: 0, duration: 800, useNativeDriver: true }),
         ]),
       ]),
-      // Button scale-in
+     
       Animated.sequence([
-        Animated.delay(600), // Delay for button to appear last
+        Animated.delay(600), 
         Animated.spring(scaleButton, {
           toValue: 1,
-          friction: 6, // Bouncy feel
+          friction: 6, 
           tension: 40,
           useNativeDriver: true,
         }),
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   button: {
     fontSize: 18,
-    color: '#fff',
+    color: '#321E00',
     backgroundColor: '#FFAE35',
     paddingVertical: 20,
     paddingHorizontal: 150,
