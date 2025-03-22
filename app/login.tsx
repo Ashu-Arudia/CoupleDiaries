@@ -5,7 +5,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       <TextInput placeholder="Enter email" style={styles.input} />
-      <TextInput placeholder="Enter password" style={styles.input} secureTextEntry />
+      <TextInput placeholder="Enter password " style={styles.input} secureTextEntry />
       
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
