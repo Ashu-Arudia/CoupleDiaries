@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
-
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, BackHandler } from 'react-native';
 
 const ANNIVERSARY_DATE = new Date('2023-06-15');
 
@@ -9,7 +8,9 @@ export default function HomeScreen() {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [years, setYears] = useState(0);
+  const [currentContent, setCurrentContent] = useState('default'); // State to track content layer
 
+  // Anniversary calculation
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const today = new Date();
@@ -36,7 +37,6 @@ export default function HomeScreen() {
         setMinutes(0);
       }
 
-      // Calculate years since anniversary
       let yearsSince = today.getFullYear() - ANNIVERSARY_DATE.getFullYear();
       if (
         today.getMonth() < ANNIVERSARY_DATE.getMonth() ||
@@ -48,62 +48,129 @@ export default function HomeScreen() {
     };
 
     calculateTimeRemaining();
-
-    const intervalId = setInterval(calculateTimeRemaining, 60000); 
+    const intervalId = setInterval(calculateTimeRemaining, 60000);
 
     return () => clearInterval(intervalId);
   }, []);
+
+  // Back button handler
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (currentContent !== 'default') {
+        setCurrentContent('default'); // Reset to default content
+        return true; // Prevent app exit
+      }
+      return false; // Allow app exit if already on default
+    });
+
+    return () => backHandler.remove(); // Cleanup on unmount
+  }, [currentContent]);
+
+  // Render content based on currentContent state
+  const renderContent = () => {
+    switch (currentContent) {
+      case 'default':
+        return (
+          <ScrollView contentContainerStyle={styles.cardsContainer}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>You and Prudence's 8th Anniversary</Text>
+              <Text style={styles.cardText}>
+                Celebrating {years} year{years !== 1 ? 's' : ''} together!
+              </Text>
+              <Text style={styles.cardSubText}>
+                Next Anniversary in {days} days, {hours} hours, {minutes} mins
+              </Text>
+              <Text style={styles.cardSubText}>Date: {ANNIVERSARY_DATE.toLocaleDateString()}</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Card 2</Text>
+              <Text style={styles.cardText}>More content coming soon...</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Card 3</Text>
+              <Text style={styles.cardText}>More content coming soon...</Text>
+            </View>
+          </ScrollView>
+        );
+      case 'page1':
+        return (
+          <ScrollView contentContainerStyle={styles.cardsContainer}>
+          <View style={styles.contentContainer}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Card 2</Text>
+              <Text style={styles.cardText}>More content coming soon...</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Card 3</Text>
+              <Text style={styles.cardText}>More content coming soon...</Text>
+            </View>
+          </View>
+          </ScrollView>
+        );
+      case 'page2':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>Welcome to Page 2 Content!</Text>
+          </View>
+        );
+      case 'page3':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>Welcome to Page 3 Content!</Text>
+          </View>
+        );
+      case 'page4':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>Welcome to Page 4 Content!</Text>
+          </View>
+        );
+      case 'page5':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>Welcome to Page 5 Content!</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.profilePicContainer}>
-          <Image
-            source={require('../assets/images/pp2.png')}
-            style={styles.profilePic}
-          />
+          <Image source={require('../assets/images/pp2.png')} style={styles.profilePic} />
         </TouchableOpacity>
-        <Image
-          source={require('../assets/images/logo.png')}
-          style={styles.logo}
-        />
+        <Image source={require('../assets/images/logo.png')} style={styles.logo} />
         <TouchableOpacity style={styles.notificationButton}>
-          <Image
-            source={require('../assets/images/notification.png')}
-            style={styles.notificationIcon}
-          />
+          <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
         </TouchableOpacity>
       </View>
 
-      {/* Cards Section */}
-      <ScrollView contentContainerStyle={styles.cardsContainer}>
-        {/* Anniversary Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>You and Prudence's
-            8th Anniversary
-          </Text>
-          <Text style={styles.cardText}>
-            Celebrating {years} year{years !== 1 ? 's' : ''} together!
-          </Text>
-          <Text style={styles.cardSubText}>
-            Next Anniversary in {days} days, {hours} hours, {minutes} mins
-          </Text>
-          <Text style={styles.cardSubText}>
-            Date: {ANNIVERSARY_DATE.toLocaleDateString()}
-          </Text>
-        </View>
+      {/* Dynamic Content Section */}
+      {renderContent()}
 
-        {/* Placeholder for Other Cards */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Card 2</Text>
-          <Text style={styles.cardText}>More content coming soon...</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Card 3</Text>
-          <Text style={styles.cardText}>More content coming soon...</Text>
-        </View>
-      </ScrollView>
+      {/* Bottom Navigation Buttons */}
+      
+      <View style={styles.bottomNav}>
+      <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('default')}>
+          <Image source={require('../assets/images/Home_page_icons/home.png')} style={[styles.Icon, currentContent == 'default' && { tintColor: '#FFAA2C' }]} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page1')}>
+          <Image source={require('../assets/images/Home_page_icons/play.png')} style={[styles.Icon, currentContent == 'page1' && {tintColor: '#FFAA2C'}]} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page2')}>
+          <Image source={require('../assets/images/Home_page_icons/diary.png')} style={[styles.Icon2, currentContent == 'page2' && {height: 60}]} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page3')}>
+          <Image source={require('../assets/images/Home_page_icons/user.png')} style={[styles.Icon, currentContent == 'page3' && {tintColor: '#FFAA2C'}]} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page4')}>
+          <Image source={require('../assets/images/Home_page_icons/settings.png')} style={[styles.Icon, currentContent == 'page4' && {tintColor: '#FFAA2C'}]} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -130,6 +197,15 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 20,
   },
+  Icon: {
+    resizeMode:'contain',
+    width:100,
+    height:30,
+  },
+  Icon2: {
+    resizeMode:'contain',
+    height:50,
+  },
   logo: {
     width: 100,
     height: 40,
@@ -148,7 +224,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     paddingHorizontal: 15,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: '#1A1A1A',
@@ -175,5 +251,37 @@ const styles = StyleSheet.create({
   cardSubText: {
     color: '#C8C8C8',
     fontSize: 14,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+  },
+  contentText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 15,
+    backgroundColor: '#111',
+  },
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  navButtonText: {
+    color: '#FFAE35',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

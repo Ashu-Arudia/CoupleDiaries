@@ -233,7 +233,7 @@ export default function App() {
         <TouchableOpacity
           style={[styles.navButton, currentStep === 1 && styles.disabledButton]}
           onPress={handlePrevious}
-          disabled={currentStep === 1}
+          // disabled={currentStep === 1}
         >
           <Image
             source={require('../assets/images/arr.png')}
