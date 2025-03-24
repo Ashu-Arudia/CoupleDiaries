@@ -1,7 +1,9 @@
 import React, {useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, BackHandler } from 'react-native';
+import { View, Text,TextInput, StyleSheet, TouchableOpacity,Dimensions, Image, ScrollView, BackHandler } from 'react-native';
 // import { DrawerLayout } from 'react-native-drawer-layout';
 import { Stack, useRouter } from 'expo-router';
+
+const { width,height } = Dimensions.get('window');
 
 const ANNIVERSARY_DATE = new Date('2023-06-15');
 
@@ -85,8 +87,10 @@ export default function HomeScreen() {
       <Image source={require('../assets/images/pp3.png')} style={[styles.image,styles.backImage]}/>
       </View>   
           <View style={styles.box}>
-          <Text style={[styles.cardTitle, {marginLeft: -35,marginTop:-30} ]}>You and Prudence's 8th Anniversary</Text>
+          <Text style={[styles.cardTitle, {marginLeft: -35,marginTop:-30,fontSize:20} ]}>You and Prudence's 8th Anniversary</Text>
+          <View style={styles.boxImg}>
           <Image source={require('../assets/images/Home_page_icons/glass.png')} style={[styles.image2]}/>
+          </View>
             </View>
           <View style={styles.box}>
 
@@ -107,51 +111,60 @@ export default function HomeScreen() {
             </View>
           </View>  
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Card 2</Text>
-              <Text style={styles.cardText}>More content coming soon...</Text>
+              <View style={styles.card1}>
+              <Image source={require('../assets/images/Home_page_icons/smiley.png')} style={styles.smiley} />
+              <Text style={styles.cardTitle}>What made you smile today?</Text>
+              </View>
+              <TextInput
+                            style={styles.input}
+                            // value={email}
+                            // onChangeText={setEmail}
+                            placeholder="Write your answer"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                          />
+              
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Card 3</Text>
-              <Text style={styles.cardText}>More content coming soon...</Text>
+              <Text style={styles.cardTitle}>Add your partner to share 
+              the Experience</Text>
+              <Text style={styles.cardText}></Text>
             </View>
           </ScrollView>
         );
       case 'page1':
         return (
-          <ScrollView contentContainerStyle={[styles.cardsContainer, styles.box]}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Card 2</Text>
-              <Text style={styles.cardText}>More content coming soon...</Text>
+          <ScrollView contentContainerStyle={[styles.cardsContainer]}>
+              <Text style={styles.txt}>My Entries</Text>
+            <View style={styles.card2}>
+            <Image source={require('../assets/images/Home_page_icons/photo1.png')} style={[styles.photo]}/>
             </View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Card 3</Text>
-              <Text style={styles.cardText}>More content coming soon...</Text>
+            <View style={styles.card2}>
+            <Image source={require('../assets/images/Home_page_icons/photo2.png')} style={[styles.photo]}/>
             </View>
-          
           </ScrollView>
         );
       case 'page2':
         return (
           <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Page 2 Content!</Text>
+            <Text style={styles.contentText}>Welcome to Page Content!</Text>
           </View>
         );
       case 'page3':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Page 3 Content!</Text>
-          </View>
+          <ScrollView contentContainerStyle={[styles.cardsContainer]}>
+              <Text style={styles.txt}>Partner's Feed</Text>
+            <View style={styles.card2}>
+            <Image source={require('../assets/images/Home_page_icons/photo1.png')} style={[styles.photo]}/>
+            </View>
+            <View style={styles.card2}>
+            <Image source={require('../assets/images/Home_page_icons/photo2.png')} style={[styles.photo]}/>
+            </View>
+          </ScrollView>
         );
       case 'page4':
         return (
           <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Page 4 Content!</Text>
-          </View>
-        );
-      case 'page5':
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Page 5 Content!</Text>
+            <Text style={styles.contentText}>Welcome to Settings Content!</Text>
           </View>
         );
       default:
@@ -162,6 +175,8 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* Header Section */}
+      {(currentContent==='page1' || currentContent==='page3')?(<View>
+      </View>):(
       <View style={styles.header}>
         <TouchableOpacity style={styles.profilePicContainer}>
           <Image source={require('../assets/images/pp2.png')} style={styles.profilePic} />
@@ -170,7 +185,8 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.notificationButton}>
           <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
         </TouchableOpacity>
-      </View>
+      </View>)
+    }
 
       {/* Dynamic Content Section */}
       {renderContent()}
@@ -199,6 +215,21 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  txt:{
+    textAlign:'center',
+    padding:15,
+    color:'#FFFFFF',
+    fontSize: 16,
+  },
+  input: {
+    color: '#363636',
+    width: width * 0.8,
+    height: height * 0.05,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+  },
   row: {
     flexDirection: 'row', 
     justifyContent: 'space-around', 
@@ -211,6 +242,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     backgroundColor: '#323232',
     padding: 8,
+  },
+  card1 :{
+    flexDirection:'row',
   },
   text: {
     color: '#FFFFFF',
@@ -302,11 +336,11 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   card: {
-    justifyContent:'flex-start',
+    // justifyContent:'center',
     gap:10,
     backgroundColor: '#222222',
     borderRadius: 10,
-    padding: 18,
+    padding: 20,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -314,10 +348,32 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  card2: {
+    // justifyContent:'center',
+    flex:1,
+    gap:10,
+    backgroundColor: '#222222',
+    borderRadius: 25,
+    padding: 20,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+    height:height*0.3,
+    width:width*0.94,
+  },
+  photo:{
+    resizeMode:'contain',
+    position:'absolute',
+    height:height*0.3,
+    width:width*0.95,
+  },
   cardTitle: {
     position:'relative',
     color: '#FFFFFF',
-    fontSize: 20,
+    // fontSize: 20,
     fontWeight: '700',
     marginBottom: 10,
     
@@ -366,8 +422,17 @@ const styles = StyleSheet.create({
   image2:{
     resizeMode:'contain',
     position:'absolute',
-    left:310,
+    width:100,
+    // left:310,r
+    // top:-50,
+  },
+  boxImg:{
+    position:'absolute',
+    right:10,
     top:-50,
-  
+  },
+  smiley:{
+    resizeMode:'contain',
+    marginRight:10,
   },
 });

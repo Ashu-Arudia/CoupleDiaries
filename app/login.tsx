@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity,Dimensions, StyleSheet, Image } from 'react-native';
 import * as Progress from 'react-native-progress';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
+const { width,height } = Dimensions.get('window');
 
 export default function App() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [showCnfPassword, setShowCnfPassword] = useState(false);
   let next_btn = ""; 
+  let prop = "";
 
   const progress = currentStep / 4;
 
@@ -64,6 +66,7 @@ export default function App() {
         return (
           <View>
             <Text style={styles.label}>Let's Create Your Account</Text>
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={email}
@@ -71,6 +74,7 @@ export default function App() {
               placeholder="Your Email"
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.inputWithIcon}
@@ -157,6 +161,7 @@ export default function App() {
         return (
           <View>
             <Text style={styles.label}>Let’s Get to Know You!</Text>
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={name}
@@ -164,6 +169,8 @@ export default function App() {
               placeholder="Your Name"
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={age}
@@ -172,13 +179,15 @@ export default function App() {
               placeholder="Your Age"
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
           </View>
         );
       case 4:
         return (
-          next_btn="Send Invitation Link",
+            next_btn="Send Invitation Link",
           <View>
             <Text style={styles.label}>Tell us About Your Partner</Text>
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={partner_name}
@@ -187,6 +196,8 @@ export default function App() {
               multiline
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
+            <View style={styles.passwordContainer}>x
             <TextInput
               style={styles.input}
               value={partner_email}
@@ -195,6 +206,8 @@ export default function App() {
               multiline
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={date}
@@ -203,6 +216,7 @@ export default function App() {
               multiline
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
+            </View>
           </View>
         );
       case 5: 
@@ -216,8 +230,7 @@ export default function App() {
         />
          </View>
               <View style={styles.doneContainer}>
-             
-            <Text style={styles.doneText}>You’re All Set Up</Text>
+            <Text style={[styles.doneText,{justifyContent:'center'}]}>You’re All Set Up</Text>
           </View>
           </View>
         );
@@ -242,7 +255,7 @@ export default function App() {
         </TouchableOpacity>
         <Progress.Bar
           progress={progress}
-          width={300}
+          width={250}
           color="#FFAE35"
           style={styles.progressBar}
         />
@@ -256,13 +269,13 @@ export default function App() {
     </View>
     {currentStep===5 ? (
     <View style={styles.btn_container}>
-        <TouchableOpacity onPress={() => router.push('/home')}>
+        <TouchableOpacity style={styles.fixedButton} onPress={() => router.push('/home')}>
           <Text style={styles.nextButton}>{next_btn}</Text>
         </TouchableOpacity>
         </View>
     ):(
     <View style={styles.btn_container}>
-        <TouchableOpacity onPress={handleNext}>
+        <TouchableOpacity style={styles.fixedButton} onPress={handleNext} >
           <Text style={styles.nextButton}>{next_btn}</Text>
         </TouchableOpacity>
         </View>
@@ -281,8 +294,8 @@ const styles = StyleSheet.create({
     marginLeft:60,
   },
   image :{
-    width: 100, 
-    height: 100, 
+    width: width * 0.25,
+    height: height * 0.15,
     resizeMode: 'contain', 
     marginBottom: 20, 
   },
@@ -295,11 +308,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 20,
   },
   progressBar: {
     marginLeft: 10,
-    marginRight: 20,
+    marginRight: 10,
   },
   stepText: {
     color: '#FFAE35',
@@ -311,38 +324,40 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     fontSize: 18,
-    marginBottom: 30,
-    marginLeft: -40,
-    marginTop: 20,
-    width: 370,
+    width: width*0.8,
+    marginLeft:20,
+    padding:30,
+    paddingLeft:-30,
+  },
+  box : {
+    width: width * 0.8,
+    height: height * 0.06,
+    position:'relative',
   },
   input: {
     color: '#C8C8C8',
-    width: 370,
-    height: 50,
+    width: width * 0.8,
+    height: height * 0.06,
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 20,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginLeft: -40,
-    marginRight: 10,
   },
   passwordContainer: {
-    height: 50,
+    width: width * 0.8,
+    height: height * 0.06,
     position: 'relative',
-    marginBottom: 20,
-    marginLeft: -40,
-    width: 370,
+    marginLeft:10,
+    marginVertical:8,
   },
   inputWithIcon: {
     color: '#C8C8C8',
-    width: 370,
-    height: 50,
+    width: width*0.8,
+    height: height*0.06,
     borderColor: '#ccc',
     borderWidth: 1,
     paddingHorizontal: 20,
-    paddingRight: 50,
+    // paddingRight: 50,
     borderRadius: 5,
   },
   eyeButton: {
@@ -369,11 +384,11 @@ const styles = StyleSheet.create({
   },
   navButton: {
     backgroundColor: 'transparent',
-    paddingVertical: 10,
+    paddingVertical: 20,
     paddingHorizontal: 10,
     borderRadius: 5,
-    marginLeft: -10,
-    marginRight: 20,
+    // marginLeft: -10,
+    // marginRight: 20,
   },
   navButtonIcon: {
     width: 24,
@@ -389,11 +404,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#321E00',
     backgroundColor: '#FFAE35',
-    paddingVertical: 10, 
-    paddingHorizontal: 100, 
-    borderRadius: 5,
+    // paddingVertical: 15, 
+    // paddingHorizontal: 100, 
+    // margin:10,
+    borderRadius: 10,
     textAlign: 'center', 
     lineHeight: 40, 
+  },
+  fixedButton: {
+    width: width * 0.8, // Fixed width
+    height: 50, // Fixed height
+    backgroundColor: '#FFAE35',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   doneContainer: {
     flex: 1,
@@ -408,9 +432,12 @@ const styles = StyleSheet.create({
   },
   btn_container: {
     position:'absolute',
-    bottom:20,
-    width:'100%',
+    bottom:10,
     paddingLeft:10,
     paddingRight:10,
+    width: '100%',
+    alignItems: 'center',
+     paddingVertical: 15, 
+    paddingHorizontal: 100,
   }
 });
