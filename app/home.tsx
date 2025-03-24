@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, BackHandler } from 'react-native';
+// import { DrawerLayout } from 'react-native-drawer-layout';
+import { Stack, useRouter } from 'expo-router';
 
 const ANNIVERSARY_DATE = new Date('2023-06-15');
 
@@ -72,16 +74,38 @@ export default function HomeScreen() {
       case 'default':
         return (
           <ScrollView contentContainerStyle={styles.cardsContainer}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>You and Prudence's 8th Anniversary</Text>
-              <Text style={styles.cardText}>
-                Celebrating {years} year{years !== 1 ? 's' : ''} together!
-              </Text>
-              <Text style={styles.cardSubText}>
-                Next Anniversary in {days} days, {hours} hours, {minutes} mins
-              </Text>
-              <Text style={styles.cardSubText}>Date: {ANNIVERSARY_DATE.toLocaleDateString()}</Text>
+            <View style={[styles.card]}>
+
+
+            <View style={[styles.container2, styles.box]}>
+      {/* Back Profile Image */}
+      <Image source={require('../assets/images/pp2.png')} style={[styles.image,styles.frontImage]}/>
+
+      {/* Front Profile Image */}
+      <Image source={require('../assets/images/pp3.png')} style={[styles.image,styles.backImage]}/>
+      </View>   
+          <View style={styles.box}>
+          <Text style={[styles.cardTitle, {marginLeft: -35,marginTop:-30} ]}>You and Prudence's 8th Anniversary</Text>
+          <Image source={require('../assets/images/Home_page_icons/glass.png')} style={[styles.image2]}/>
             </View>
+          <View style={styles.box}>
+
+              <View style={styles.row}>
+        <View style={[styles.column , {borderTopLeftRadius:7,borderBottomLeftRadius:7,marginTop:-60 }]}>
+          <Text style={styles.text1}>Days</Text>
+          <Text style={styles.text}>{days}</Text>
+        </View>
+        <View style={[styles.column, {marginTop:-60} ]}>
+          <Text style={styles.text1}>Hours</Text>
+          <Text style={styles.text}>{hours}</Text>
+        </View>
+        <View style={[styles.column , {borderTopRightRadius:7,borderBottomRightRadius:7,marginTop:-60 }]}>
+          <Text style={styles.text1}>Mins</Text>
+          <Text style={styles.text}>{minutes}</Text>
+        </View>
+      </View>
+            </View>
+          </View>  
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Card 2</Text>
               <Text style={styles.cardText}>More content coming soon...</Text>
@@ -94,8 +118,7 @@ export default function HomeScreen() {
         );
       case 'page1':
         return (
-          <ScrollView contentContainerStyle={styles.cardsContainer}>
-          <View style={styles.contentContainer}>
+          <ScrollView contentContainerStyle={[styles.cardsContainer, styles.box]}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Card 2</Text>
               <Text style={styles.cardText}>More content coming soon...</Text>
@@ -104,7 +127,7 @@ export default function HomeScreen() {
               <Text style={styles.cardTitle}>Card 3</Text>
               <Text style={styles.cardText}>More content coming soon...</Text>
             </View>
-          </View>
+          
           </ScrollView>
         );
       case 'page2':
@@ -176,6 +199,29 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row', 
+    justifyContent: 'space-around', 
+    padding: 30,
+    marginLeft:-15,
+    marginRight:15,
+  },
+  column: {
+    flex: 1, 
+    alignItems: 'center', 
+    backgroundColor: '#323232',
+    padding: 8,
+  },
+  text: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight:500,
+  },
+  text1: {
+    color: '#C3C3C3',
+    fontSize: 12,
+    fontWeight:500,
+  },
   container: {
     flex: 1,
     backgroundColor: '#000',
@@ -196,6 +242,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 20,
+  },
+  container2: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+  },
+  box: {
+    width: '80%',
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginLeft:-10,
+  },
+  image: {
+    width: 60, 
+    height: 60, 
+    borderRadius: 40, 
+    borderWidth: 3, 
+    borderColor: '#fff',
+  },
+  backImage: {
+    position: 'absolute',
+    left: 50,
+    zIndex: 1,
+  },
+  frontImage: {
+    position: 'absolute',
+    left: 10, 
+    zIndex: 2,
   },
   Icon: {
     resizeMode:'contain',
@@ -227,9 +302,11 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   card: {
-    backgroundColor: '#1A1A1A',
+    justifyContent:'flex-start',
+    gap:10,
+    backgroundColor: '#222222',
     borderRadius: 10,
-    padding: 20,
+    padding: 18,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -238,10 +315,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardTitle: {
-    color: '#FFAE35',
+    position:'relative',
+    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 10,
+    
   },
   cardText: {
     color: '#FFFFFF',
@@ -283,5 +362,12 @@ const styles = StyleSheet.create({
     color: '#FFAE35',
     fontSize: 16,
     fontWeight: '600',
+  },
+  image2:{
+    resizeMode:'contain',
+    position:'absolute',
+    left:310,
+    top:-50,
+  
   },
 });
