@@ -20,8 +20,10 @@ export default function App() {
   const [date, setDate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showCnfPassword, setShowCnfPassword] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  const genders = ["Male", "Female", "Other"];
+
   let next_btn = ""; 
-  let prop = "";
 
   const progress = currentStep / 4;
 
@@ -161,6 +163,10 @@ export default function App() {
         return (
           <View>
             <Text style={styles.label}>Let’s Get to Know You!</Text>
+            <Image
+          source={require('../assets/images/ppic2.jpg')} 
+          style={styles.imagepic}
+        />
             <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
@@ -180,7 +186,29 @@ export default function App() {
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
             </View>
-          </View>
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.container2}>
+      {genders.map((gender, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.button,
+            selectedGender === gender && styles.selectedButton, // Apply selected style
+          ]}
+          onPress={() => setSelectedGender(gender)}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              selectedGender === gender && styles.selectedText, // Change text color when selected
+            ]}
+          >
+            {gender}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+            </View>  
         );
       case 4:
         return (
@@ -197,7 +225,7 @@ export default function App() {
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
             </View>
-            <View style={styles.passwordContainer}>x
+            <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
               value={partner_email}
@@ -243,6 +271,7 @@ export default function App() {
     <View style={styles.container}>
       { currentStep < 5 && (
       <View style={styles.header}>
+        <View>
         <TouchableOpacity
           style={[styles.navButton, currentStep === 1 && styles.disabledButton]}
           onPress={handlePrevious}
@@ -253,13 +282,18 @@ export default function App() {
             style={styles.navButtonIcon}
           />
         </TouchableOpacity>
+        </View>
+        <View>
         <Progress.Bar
           progress={progress}
-          width={250}
+          width={width*0.65}
           color="#FFAE35"
           style={styles.progressBar}
         />
+        </View>
+        <View>
         <Text style={styles.stepText}>{currentStep}/4</Text>
+        </View>
       </View>
       )}
       <View style={styles.content}>{renderStep()}</View>
@@ -286,6 +320,37 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  container2: {
+    flexDirection: "row", // Arrange buttons in a row
+    // justifyContent: "center", // Center the buttons
+    alignItems: "center",
+    marginTop: 20,
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 5,
+  },
+  selectedButton: {
+    backgroundColor: "rgba(255,255,255,0.3)", // Change background when selected
+  },
+  buttonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  selectedText: {
+    color: "rgba(255,255,255,0.3)", // Change text color when selected
+  },
+  imagepic:{
+    resizeMode:'contain',
+    borderRadius:70,
+    alignSelf:'center',
+    marginVertical:20,
+  },
   img: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -308,7 +373,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30,
+    justifyContent:'space-around',
+    width:width,
+    marginBottom:30,
   },
   progressBar: {
     marginLeft: 10,
@@ -323,11 +391,10 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontWeight: '700',
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     width: width*0.8,
-    marginLeft:20,
-    padding:30,
-    paddingLeft:-30,
+    marginLeft:10,
+    marginVertical:10,
   },
   box : {
     width: width * 0.8,
@@ -338,7 +405,7 @@ const styles = StyleSheet.create({
     color: '#C8C8C8',
     width: width * 0.8,
     height: height * 0.06,
-    borderColor: '#ccc',
+    borderColor: 'rgba(255,255,255,0.3)',
     borderWidth: 1,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -354,7 +421,7 @@ const styles = StyleSheet.create({
     color: '#C8C8C8',
     width: width*0.8,
     height: height*0.06,
-    borderColor: '#ccc',
+    borderColor: 'rgba(255,255,255,0.3)',
     borderWidth: 1,
     paddingHorizontal: 20,
     // paddingRight: 50,
@@ -384,8 +451,8 @@ const styles = StyleSheet.create({
   },
   navButton: {
     backgroundColor: 'transparent',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
+    paddingVertical: 'auto',
+    paddingHorizontal: 'auto',
     borderRadius: 5,
     // marginLeft: -10,
     // marginRight: 20,

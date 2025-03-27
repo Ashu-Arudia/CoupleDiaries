@@ -66,7 +66,7 @@ export default function GetStarted() {
       <Animated.Text style={[styles.description1, { opacity: fadeText1, transform: [{ translateY: slideText1 }] }]}>Wrapped Together</Animated.Text>
       <Animated.Text style={[styles.description2, { opacity: fadeText2, transform: [{ translateY: slideText2 }] }]}>Wrapped Together lets couples capture daily moments, share heartfelt videos, and relive their journey with beautifully crafted highlights that celebrate their love.</Animated.Text>
       <Animated.View style={[styles.buttonContainer, { transform: [{ scale: scaleButton }] }]}>
-        <Text style={styles.button} onPress={() => router.push('/login')}>Get Started</Text>
+        <Text style={styles.button} onPress={() => router.push('/home')}>Get Started</Text>
       </Animated.View>
     </View>
   );

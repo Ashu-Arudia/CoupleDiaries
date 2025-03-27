@@ -1,18 +1,38 @@
-import React, {useRef, useState, useEffect } from 'react';
-import { View, Text,TextInput, StyleSheet, TouchableOpacity,Dimensions, Image, ScrollView, BackHandler } from 'react-native';
-// import { DrawerLayout } from 'react-native-drawer-layout';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+// const scrollViewRef = useRef<ScrollView>(null);
 
-const { width,height } = Dimensions.get('window');
+import {
+  BackHandler,
+  Dimensions,
+  Image,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const ANNIVERSARY_DATE = new Date('2023-06-15');
+const { width, height } = Dimensions.get("window");
+
+const ANNIVERSARY_DATE = new Date("2023-06-15");
 
 export default function HomeScreen() {
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [years, setYears] = useState(0);
-  const [currentContent, setCurrentContent] = useState('default'); // State to track content layer
+  const [currentContent, setCurrentContent] = useState("default"); // State to track content layer
+  const [showMessageInput, setShowMessageInput] = useState(false); // Toggle message input
+  const [message, setMessage] = useState("");
+
+  const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const router = useRouter();
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Anniversary calculation
   useEffect(() => {
@@ -28,9 +48,15 @@ export default function HomeScreen() {
       const timeDifference = nextAnniversary.getTime() - today.getTime();
 
       if (timeDifference > 0) {
-        const daysRemaining = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-        const hoursRemaining = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutesRemaining = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+        const daysRemaining = Math.floor(
+          timeDifference / (1000 * 60 * 60 * 24)
+        );
+        const hoursRemaining = Math.floor(
+          (timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutesRemaining = Math.floor(
+          (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
+        );
 
         setDays(daysRemaining);
         setHours(hoursRemaining);
@@ -44,7 +70,8 @@ export default function HomeScreen() {
       let yearsSince = today.getFullYear() - ANNIVERSARY_DATE.getFullYear();
       if (
         today.getMonth() < ANNIVERSARY_DATE.getMonth() ||
-        (today.getMonth() === ANNIVERSARY_DATE.getMonth() && today.getDate() < ANNIVERSARY_DATE.getDate())
+        (today.getMonth() === ANNIVERSARY_DATE.getMonth() &&
+          today.getDate() < ANNIVERSARY_DATE.getDate())
       ) {
         yearsSince -= 1;
       }
@@ -59,109 +86,217 @@ export default function HomeScreen() {
 
   // Back button handler
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (currentContent !== 'default') {
-        setCurrentContent('default'); // Reset to default content
-        return true; // Prevent app exit
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (currentContent !== "default") {
+          setCurrentContent("default"); // Reset to default content
+          return true; // Prevent app exit
+        }
+        return false; // Allow app exit if already on default
       }
-      return false; // Allow app exit if already on default
-    });
+    );
 
     return () => backHandler.remove(); // Cleanup on unmount
   }, [currentContent]);
+  useEffect(() => {
+    if (currentContent === "page2") {
+      router.push("/diary");
+    }
+  }, [currentContent, router]);
+
+  // Keyboard visibility listener
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      const newMessage = {
+        id: Date.now().toString(),
+        text: message,
+      };
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      console.log("Message Sent to Partner:", message);
+      setMessage("");
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
 
   // Render content based on currentContent state
   const renderContent = () => {
     switch (currentContent) {
-      case 'default':
+      case "default":
         return (
           <ScrollView contentContainerStyle={styles.cardsContainer}>
             <View style={[styles.card]}>
+              <View style={[styles.container2, styles.box]}>
+                {/* Back Profile Image */}
+                <Image
+                  source={require("../assets/images/pp2.png")}
+                  style={[styles.image, styles.frontImage]}
+                />
 
-
-            <View style={[styles.container2, styles.box]}>
-      {/* Back Profile Image */}
-      <Image source={require('../assets/images/pp2.png')} style={[styles.image,styles.frontImage]}/>
-
-      {/* Front Profile Image */}
-      <Image source={require('../assets/images/pp3.png')} style={[styles.image,styles.backImage]}/>
-      </View>   
-          <View style={styles.box}>
-          <Text style={[styles.cardTitle, {marginLeft: -35,marginTop:-30,fontSize:20} ]}>You and Prudence's 8th Anniversary</Text>
-          <View style={styles.boxImg}>
-          <Image source={require('../assets/images/Home_page_icons/glass.png')} style={[styles.image2]}/>
-          </View>
+                {/* Front Profile Image */}
+                <Image
+                  source={require("../assets/images/pp3.png")}
+                  style={[styles.image, styles.backImage]}
+                />
+              </View>
+              <View style={styles.box}>
+                <Text
+                  style={[
+                    styles.cardTitle,
+                    { marginLeft: -35, marginTop: -30, fontSize: 20 },
+                  ]}
+                >
+                  You and Prudence's 8th Anniversary
+                </Text>
+                <View style={styles.boxImg}>
+                  <Image
+                    source={require("../assets/images/Home_page_icons/glass.png")}
+                    style={[styles.image2]}
+                  />
+                </View>
+              </View>
+              <View style={styles.box}>
+                <View style={styles.row}>
+                  <View
+                    style={[
+                      styles.column,
+                      {
+                        borderTopLeftRadius: 7,
+                        borderBottomLeftRadius: 7,
+                        marginTop: -60,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.text1}>Days</Text>
+                    <Text style={styles.text}>{days}</Text>
+                  </View>
+                  <View style={[styles.column, { marginTop: -60 }]}>
+                    <Text style={styles.text1}>Hours</Text>
+                    <Text style={styles.text}>{hours}</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.column,
+                      {
+                        borderTopRightRadius: 7,
+                        borderBottomRightRadius: 7,
+                        marginTop: -60,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.text1}>Mins</Text>
+                    <Text style={styles.text}>{minutes}</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          <View style={styles.box}>
-
-              <View style={styles.row}>
-        <View style={[styles.column , {borderTopLeftRadius:7,borderBottomLeftRadius:7,marginTop:-60 }]}>
-          <Text style={styles.text1}>Days</Text>
-          <Text style={styles.text}>{days}</Text>
-        </View>
-        <View style={[styles.column, {marginTop:-60} ]}>
-          <Text style={styles.text1}>Hours</Text>
-          <Text style={styles.text}>{hours}</Text>
-        </View>
-        <View style={[styles.column , {borderTopRightRadius:7,borderBottomRightRadius:7,marginTop:-60 }]}>
-          <Text style={styles.text1}>Mins</Text>
-          <Text style={styles.text}>{minutes}</Text>
-        </View>
-      </View>
-            </View>
-          </View>  
             <View style={styles.card}>
               <View style={styles.card1}>
-              <Image source={require('../assets/images/Home_page_icons/smiley.png')} style={styles.smiley} />
-              <Text style={styles.cardTitle}>What made you smile today?</Text>
+                <Image
+                  source={require("../assets/images/Home_page_icons/smiley.png")}
+                  style={styles.smiley}
+                />
+                <Text style={styles.cardTitle}>What made you smile today?</Text>
               </View>
               <TextInput
-                            style={styles.input}
-                            // value={email}
-                            // onChangeText={setEmail}
-                            placeholder="Write your answer"
-                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                          />
-              
+                style={styles.input}
+                // value={email}
+                // onChangeText={setEmail}
+                placeholder="Write your answer"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              />
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Add your partner to share 
-              the Experience</Text>
+              <Text style={styles.cardTitle}>
+                Add your partner to share the Experience
+              </Text>
               <Text style={styles.cardText}></Text>
             </View>
           </ScrollView>
         );
-      case 'page1':
+      case "page1":
         return (
           <ScrollView contentContainerStyle={[styles.cardsContainer]}>
-              <Text style={styles.txt}>My Entries</Text>
+            <Text style={styles.txt}>Our Entries</Text>
             <View style={styles.card2}>
-            <Image source={require('../assets/images/Home_page_icons/photo1.png')} style={[styles.photo]}/>
+              <Image
+                source={require("../assets/images/Home_page_icons/photo1.png")}
+                style={[styles.photo]}
+              />
             </View>
             <View style={styles.card2}>
-            <Image source={require('../assets/images/Home_page_icons/photo2.png')} style={[styles.photo]}/>
+              <Image
+                source={require("../assets/images/Home_page_icons/photo2.png")}
+                style={[styles.photo]}
+              />
             </View>
           </ScrollView>
         );
-      case 'page2':
+      case "page2":
+        // router.push('/diary'); // Expo Router se diary page pe navigate
+        return null;
+      case "page3":
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Page Content!</Text>
+          <View style={styles.page3Container}>
+            <ScrollView contentContainerStyle={styles.cardsContainer}>
+              {/* Display Sent Messages */}
+              {messages.map((msg) => (
+                <View key={msg.id} style={styles.messageBubble}>
+                  <Text style={styles.messageText}>{msg.text}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Message Input Above Bottom Nav */}
+            <View
+              style={[
+                styles.messageInputContainer,
+                { bottom: isKeyboardVisible ? 0 : 70 },
+              ]}
+            >
+              <TextInput
+                style={styles.messageInput}
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Type your message..."
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendMessage}
+              >
+                <Image
+                  source={require("../assets/images/icons/send.png")}
+                  // style={[styles.photo]}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         );
-      case 'page3':
-        return (
-          <ScrollView contentContainerStyle={[styles.cardsContainer]}>
-              <Text style={styles.txt}>Partner's Feed</Text>
-            <View style={styles.card2}>
-            <Image source={require('../assets/images/Home_page_icons/photo1.png')} style={[styles.photo]}/>
-            </View>
-            <View style={styles.card2}>
-            <Image source={require('../assets/images/Home_page_icons/photo2.png')} style={[styles.photo]}/>
-            </View>
-          </ScrollView>
-        );
-      case 'page4':
+      case "page4":
         return (
           <View style={styles.contentContainer}>
             <Text style={styles.contentText}>Welcome to Settings Content!</Text>
@@ -175,264 +310,426 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* Header Section */}
-      {(currentContent==='page1' || currentContent==='page3')?(<View>
-      </View>):(
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.profilePicContainer}>
-          <Image source={require('../assets/images/pp2.png')} style={styles.profilePic} />
-        </TouchableOpacity>
-        <Image source={require('../assets/images/logo.png')} style={styles.logo} />
-        <TouchableOpacity style={styles.notificationButton}>
-          <Image source={require('../assets/images/notification.png')} style={styles.notificationIcon} />
-        </TouchableOpacity>
-      </View>)
-    }
+      {currentContent === "default" ? (
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.profilePicContainer}>
+            <Image
+              source={require("../assets/images/pp2.png")}
+              style={styles.profilePic}
+            />
+          </TouchableOpacity>
+          <Image
+            source={require("../assets/images/logo.png")}
+            style={styles.logo}
+          />
+          <TouchableOpacity style={styles.notificationButton}>
+            <Image
+              source={require("../assets/images/notification.png")}
+              style={styles.notificationIcon}
+            />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View></View>
+      )}
 
       {/* Dynamic Content Section */}
       {renderContent()}
 
       {/* Bottom Navigation Buttons */}
-      
-      <View style={styles.bottomNav}>
-      <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('default')}>
-          <Image source={require('../assets/images/Home_page_icons/home.png')} style={[styles.Icon, currentContent == 'default' && { tintColor: '#FFAA2C' }]} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page1')}>
-          <Image source={require('../assets/images/Home_page_icons/play.png')} style={[styles.Icon, currentContent == 'page1' && {tintColor: '#FFAA2C'}]} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page2')}>
-          <Image source={require('../assets/images/Home_page_icons/diary.png')} style={[styles.Icon2, currentContent == 'page2' && {height: 60}]} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page3')}>
-          <Image source={require('../assets/images/Home_page_icons/user.png')} style={[styles.Icon, currentContent == 'page3' && {tintColor: '#FFAA2C'}]} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => setCurrentContent('page4')}>
-          <Image source={require('../assets/images/Home_page_icons/settings.png')} style={[styles.Icon, currentContent == 'page4' && {tintColor: '#FFAA2C'}]} />
-        </TouchableOpacity>
-      </View>
+      {/* {currentContent==='page2'?<TouchableOpacity style={styles.navButton} onPress={handleSendMessage}>
+          <Image source={require('../assets/images/Home_page_icons/diary.png')} style={[styles.Icon22]} />
+        </TouchableOpacity>: */}
+      {!isKeyboardVisible && (
+        <View style={styles.bottomNav}>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => setCurrentContent("default")}
+          >
+            <Image
+              source={require("../assets/images/Home_page_icons/home.png")}
+              style={[
+                styles.Icon,
+                currentContent === "default" && { tintColor: "#FFAA2C" },
+              ]}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => setCurrentContent("page1")}
+          >
+            <Image
+              source={require("../assets/images/Home_page_icons/play.png")}
+              style={[
+                styles.Icon,
+                currentContent === "page1" && { tintColor: "#FFAA2C" },
+              ]}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => setCurrentContent("page2")}
+          >
+            <Image
+              source={require("../assets/images/Home_page_icons/diary.png")}
+              style={[
+                styles.Icon2,
+                currentContent === "page2" && { height: 60 },
+              ]}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => setCurrentContent("page3")}
+          >
+            <Image
+              source={require("../assets/images/Home_page_icons/user.png")}
+              style={[
+                styles.Icon,
+                currentContent === "page3" && { tintColor: "#FFAA2C" },
+              ]}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => setCurrentContent("page4")}
+          >
+            <Image
+              source={require("../assets/images/Home_page_icons/settings.png")}
+              style={[
+                styles.Icon,
+                currentContent === "page4" && { tintColor: "#FFAA2C" },
+              ]}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  txt:{
-    textAlign:'center',
-    padding:15,
-    color:'#FFFFFF',
+  page3Container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  cardsContainer: {
+    paddingHorizontal: 15,
+    paddingTop: 20,
+    paddingBottom: 120, // Increased padding to avoid overlap with input
+    // backgroundColor: "red",
+  },
+  messageBubble: {
+    backgroundColor: "#323232",
+    padding: 10,
+    borderRadius: 15,
+    marginVertical: 5,
+    marginHorizontal: 15,
+    maxWidth: "80%",
+    alignSelf: "flex-end",
+  },
+  messageText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  messageInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    // backgroundColor: "#111",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 10, // Ensure it stays above other content
+  },
+  messageInput: {
+    flex: 1,
+    backgroundColor: "#222222",
+    color: "#FFFFFF",
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    maxHeight: 100,
+  },
+  sendButton: {
+    backgroundColor: "#FFAE35",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  sendButtonText: {
+    color: "#fff",
+    // fontSize: 14,
+    // fontWeight: "600",
+  },
+  page2Container: {
+    paddingBottom: 100,
+  },
+  messageContainer: {
+    padding: 15,
+    width: "100%",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  txt: {
+    textAlign: "center",
+    padding: 15,
+    color: "#FFFFFF",
     fontSize: 16,
   },
   input: {
-    color: '#363636',
+    color: "#363636",
     width: width * 0.8,
     height: height * 0.05,
-    borderColor: '#ccc',
+    borderColor: "rgba(255,255,255,0.3)",
     borderWidth: 1,
     paddingHorizontal: 20,
     borderRadius: 30,
   },
   row: {
-    flexDirection: 'row', 
-    justifyContent: 'space-around', 
+    flexDirection: "row",
+    justifyContent: "space-around",
     padding: 30,
-    marginLeft:-15,
-    marginRight:15,
+    marginLeft: -15,
+    marginRight: 15,
   },
   column: {
-    flex: 1, 
-    alignItems: 'center', 
-    backgroundColor: '#323232',
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#323232",
     padding: 8,
   },
-  card1 :{
-    flexDirection:'row',
+  row2: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    gap: 10,
+    width: width * 0.5,
+    alignSelf: "flex-start",
+    backgroundColor: "red",
+  },
+  column2: {
+    height: 30,
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#323232",
+    borderRadius: 50,
+  },
+  card1: {
+    flexDirection: "row",
   },
   text: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight:500,
+    fontWeight: 500,
   },
   text1: {
-    color: '#C3C3C3',
+    color: "#C3C3C3",
     fontSize: 12,
-    fontWeight:500,
+    fontWeight: 500,
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 20,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   profilePicContainer: {
     width: 45,
     height: 45,
   },
   profilePic: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 20,
   },
   container2: {
-    flexDirection: 'row',
-    // alignItems: 'center',
+    flexDirection: "row",
   },
   box: {
-    width: '80%',
+    width: "80%",
     height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 10,
-    marginLeft:-10,
+    marginLeft: -10,
   },
   image: {
-    width: 60, 
-    height: 60, 
-    borderRadius: 40, 
-    borderWidth: 3, 
-    borderColor: '#fff',
+    width: 60,
+    height: 60,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: "#fff",
   },
   backImage: {
-    position: 'absolute',
+    position: "absolute",
     left: 50,
     zIndex: 1,
   },
   frontImage: {
-    position: 'absolute',
-    left: 10, 
+    position: "absolute",
+    left: 10,
     zIndex: 2,
   },
   Icon: {
-    resizeMode:'contain',
-    width:100,
-    height:30,
+    resizeMode: "contain",
+    width: 100,
+    height: 30,
   },
   Icon2: {
-    resizeMode:'contain',
-    height:50,
+    resizeMode: "contain",
+    height: 50,
+  },
+  Icon22: {
+    resizeMode: "contain",
+    position: "absolute",
+    bottom: 15,
+    // backgroundColor:'red',
   },
   logo: {
     width: 100,
     height: 40,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   notificationButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   notificationIcon: {
     width: 55,
     height: 55,
   },
-  cardsContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 20,
-    paddingBottom: 100,
-  },
+  // cardsContainer: {
+  //   paddingHorizontal: 15,
+  //   paddingTop: 20,
+  //   paddingBottom: 100,
+  // },
   card: {
     // justifyContent:'center',
-    gap:10,
-    backgroundColor: '#222222',
+    gap: 10,
+    backgroundColor: "#222222",
     borderRadius: 10,
     padding: 20,
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
   },
   card2: {
-    // justifyContent:'center',
-    flex:1,
-    gap:10,
-    backgroundColor: '#222222',
-    borderRadius: 25,
-    padding: 20,
+    flex: 1,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-    height:height*0.3,
-    width:width*0.94,
+    height: height * 0.3,
+    width: width * 0.94,
   },
-  photo:{
-    resizeMode:'contain',
-    position:'absolute',
-    height:height*0.3,
-    width:width*0.95,
+  photo: {
+    borderRadius: 25,
+    resizeMode: "cover",
+    position: "absolute",
+    height: height * 0.3,
+    width: width * 0.94,
   },
   cardTitle: {
-    position:'relative',
-    color: '#FFFFFF',
+    position: "relative",
+    color: "#FFFFFF",
     // fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 10,
-    
   },
   cardText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     marginBottom: 5,
   },
   cardSubText: {
-    color: '#C8C8C8',
+    color: "#C8C8C8",
     fontSize: 14,
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 15,
   },
+  contentContainer2: {
+    flex: 1,
+    // alignItems: 'center',
+    width: width,
+    height: height * 0.45,
+  },
+  page2_text: {
+    flexDirection: "row",
+    width: width,
+    marginTop: 20,
+    marginLeft: 40,
+  },
+  page2_txt: {
+    fontFamily: "Satoshi",
+    color: "#ffff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  page2_txt2: {
+    fontFamily: "Satoshi",
+    color: "#BEBEBE",
+    fontSize: 20,
+  },
+  photo_page2: {
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    resizeMode: "cover",
+    width: width,
+    height: height * 0.45,
+  },
   contentText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    paddingVertical: 15,
-    backgroundColor: '#111',
+    paddingVertical: 2,
+    backgroundColor: "#111",
   },
   navButton: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 10,
   },
   navButtonText: {
-    color: '#FFAE35',
+    color: "#FFAE35",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  image2:{
-    resizeMode:'contain',
-    position:'absolute',
-    width:100,
-    // left:310,r
-    // top:-50,
+  image2: {
+    resizeMode: "contain",
+    position: "absolute",
+    width: 100,
   },
-  boxImg:{
-    position:'absolute',
-    right:10,
-    top:-50,
+  boxImg: {
+    position: "absolute",
+    right: 10,
+    top: -50,
   },
-  smiley:{
-    resizeMode:'contain',
-    marginRight:10,
+  smiley: {
+    resizeMode: "contain",
+    marginRight: 10,
   },
 });
