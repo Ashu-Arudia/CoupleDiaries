@@ -1,7 +1,7 @@
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-// const scrollViewRef = useRef<ScrollView>(null);
-
 import {
   BackHandler,
   Dimensions,
@@ -14,9 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Card, useAppStore } from "./store";
 
 const { width, height } = Dimensions.get("window");
-
 const ANNIVERSARY_DATE = new Date("2023-06-15");
 
 export default function HomeScreen() {
@@ -24,17 +24,14 @@ export default function HomeScreen() {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [years, setYears] = useState(0);
-  const [currentContent, setCurrentContent] = useState("default"); // State to track content layer
-  const [showMessageInput, setShowMessageInput] = useState(false); // Toggle message input
   const [message, setMessage] = useState("");
-
   const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
-  const [currentMessage, setCurrentMessage] = useState("");
-  const router = useRouter();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Anniversary calculation
+  const { cards, currentContent, setCurrentContent } = useAppStore();
+
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const today = new Date();
@@ -80,32 +77,23 @@ export default function HomeScreen() {
 
     calculateTimeRemaining();
     const intervalId = setInterval(calculateTimeRemaining, 60000);
-
     return () => clearInterval(intervalId);
   }, []);
 
-  // Back button handler
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
         if (currentContent !== "default") {
-          setCurrentContent("default"); // Reset to default content
-          return true; // Prevent app exit
+          setCurrentContent("default");
+          return true;
         }
-        return false; // Allow app exit if already on default
+        return false;
       }
     );
+    return () => backHandler.remove();
+  }, [currentContent, setCurrentContent]);
 
-    return () => backHandler.remove(); // Cleanup on unmount
-  }, [currentContent]);
-  useEffect(() => {
-    if (currentContent === "page2") {
-      router.push("/diary");
-    }
-  }, [currentContent, router]);
-
-  // Keyboard visibility listener
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
@@ -119,7 +107,6 @@ export default function HomeScreen() {
         setKeyboardVisible(false);
       }
     );
-
     return () => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
@@ -128,10 +115,7 @@ export default function HomeScreen() {
 
   const handleSendMessage = () => {
     if (message.trim()) {
-      const newMessage = {
-        id: Date.now().toString(),
-        text: message,
-      };
+      const newMessage = { id: Date.now().toString(), text: message };
       setMessages((prevMessages) => [...prevMessages, newMessage]);
       console.log("Message Sent to Partner:", message);
       setMessage("");
@@ -141,21 +125,32 @@ export default function HomeScreen() {
     }
   };
 
-  // Render content based on currentContent state
+  const handleCardPress = (card: Card) => {
+    console.log("Card pressed:", card);
+    router.push({
+      pathname: "/CardDetails",
+      params: {
+        date: card.date,
+        mood: card.mood,
+        location: card.location,
+        temperature: card.temperature,
+        photo: card.photo,
+      },
+    });
+  };
+
   const renderContent = () => {
+    console.log("Rendering content for:", currentContent, "Cards:", cards);
     switch (currentContent) {
       case "default":
         return (
           <ScrollView contentContainerStyle={styles.cardsContainer}>
             <View style={[styles.card]}>
               <View style={[styles.container2, styles.box]}>
-                {/* Back Profile Image */}
                 <Image
                   source={require("../assets/images/pp2.png")}
                   style={[styles.image, styles.frontImage]}
                 />
-
-                {/* Front Profile Image */}
                 <Image
                   source={require("../assets/images/pp3.png")}
                   style={[styles.image, styles.backImage]}
@@ -222,8 +217,6 @@ export default function HomeScreen() {
               </View>
               <TextInput
                 style={styles.input}
-                // value={email}
-                // onChangeText={setEmail}
                 placeholder="Write your answer"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
               />
@@ -240,36 +233,100 @@ export default function HomeScreen() {
         return (
           <ScrollView contentContainerStyle={[styles.cardsContainer]}>
             <Text style={styles.txt}>Our Entries</Text>
-            <View style={styles.card2}>
-              <Image
-                source={require("../assets/images/Home_page_icons/photo1.png")}
-                style={[styles.photo]}
-              />
-            </View>
-            <View style={styles.card2}>
-              <Image
-                source={require("../assets/images/Home_page_icons/photo2.png")}
-                style={[styles.photo]}
-              />
-            </View>
+            {cards.map((card) => (
+              <TouchableOpacity
+                key={card.id}
+                style={styles.card2}
+                onPress={() => handleCardPress(card)}
+              >
+                <View style={styles.play}>
+                  <Image
+                    source={require("../assets/images/icons/play.png")}
+                    style={[styles.playImg]}
+                  />
+                </View>
+                <Image
+                  source={
+                    typeof card.photo === "string" &&
+                    card.photo.startsWith("file://")
+                      ? { uri: card.photo }
+                      : (card.photo as number)
+                  }
+                  style={[styles.photo, { opacity: 0.6 }]}
+                  onError={(e) =>
+                    console.log("Image load error:", e.nativeEvent)
+                  }
+                />
+                <View style={styles.selectedColumn}>
+                  <View style={styles.textcont}>
+                    <Text style={styles.text}>{card.date}</Text>
+                  </View>
+                  <View style={styles.moodcont}>
+                    <LinearGradient
+                      colors={[
+                        "rgba(255, 151, 86, 0.7)",
+                        "rgba(255, 251, 180, 0.7)",
+                      ]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.gradient, { opacity: 0.6 }]}
+                    >
+                      <BlurView
+                        intensity={50}
+                        tint="dark"
+                        style={styles.blurView}
+                      >
+                        <Text style={styles.gradientText}>{card.mood}</Text>
+                      </BlurView>
+                    </LinearGradient>
+                    <LinearGradient
+                      colors={[
+                        "rgba(192, 192, 192, 0.5)",
+                        "rgba(255, 255, 255, 0.5)",
+                      ]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.gradient]}
+                    >
+                      <Text style={styles.textm}>{card.location}</Text>
+                    </LinearGradient>
+                    <LinearGradient
+                      colors={[
+                        "rgba(192, 192, 192, 0.5)",
+                        "rgba(255, 255, 255, 0.5)",
+                      ]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.gradient}
+                    >
+                      <Text style={styles.textm}>{card.temperature}</Text>
+                    </LinearGradient>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         );
       case "page2":
-        // router.push('/diary'); // Expo Router se diary page pe navigate
-        return null;
+        return (
+          <TouchableOpacity
+            style={styles.contentContainer}
+            onPress={() => router.push("/add_card")}
+            activeOpacity={1}
+          >
+            <Text style={styles.contentText}>Opening diary...</Text>
+          </TouchableOpacity>
+        );
       case "page3":
         return (
           <View style={styles.page3Container}>
             <ScrollView contentContainerStyle={styles.cardsContainer}>
-              {/* Display Sent Messages */}
               {messages.map((msg) => (
                 <View key={msg.id} style={styles.messageBubble}>
                   <Text style={styles.messageText}>{msg.text}</Text>
                 </View>
               ))}
             </ScrollView>
-
-            {/* Message Input Above Bottom Nav */}
             <View
               style={[
                 styles.messageInputContainer,
@@ -288,10 +345,7 @@ export default function HomeScreen() {
                 style={styles.sendButton}
                 onPress={handleSendMessage}
               >
-                <Image
-                  source={require("../assets/images/icons/send.png")}
-                  // style={[styles.photo]}
-                />
+                <Image source={require("../assets/images/icons/send.png")} />
               </TouchableOpacity>
             </View>
           </View>
@@ -309,7 +363,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Section */}
       {currentContent === "default" ? (
         <View style={styles.header}>
           <TouchableOpacity style={styles.profilePicContainer}>
@@ -332,14 +385,7 @@ export default function HomeScreen() {
       ) : (
         <View></View>
       )}
-
-      {/* Dynamic Content Section */}
       {renderContent()}
-
-      {/* Bottom Navigation Buttons */}
-      {/* {currentContent==='page2'?<TouchableOpacity style={styles.navButton} onPress={handleSendMessage}>
-          <Image source={require('../assets/images/Home_page_icons/diary.png')} style={[styles.Icon22]} />
-        </TouchableOpacity>: */}
       {!isKeyboardVisible && (
         <View style={styles.bottomNav}>
           <TouchableOpacity
@@ -409,6 +455,52 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  playImg: {
+    resizeMode: "contain",
+    width: 50,
+    height: 50,
+  },
+  play: {
+    marginTop: 15,
+    paddingLeft: 19,
+  },
+  selectedColumn: {
+    flexDirection: "column",
+    alignSelf: "center",
+    alignItems: "center",
+    borderRadius: 50,
+    width: width * 0.6,
+    position: "absolute",
+    bottom: 5,
+  },
+  moodcont: {
+    flexDirection: "row",
+    marginVertical: 17,
+    gap: 8,
+  },
+  textcont: {},
+  gradient: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
+    padding: 8,
+    width: "100%",
+    overflow: "hidden",
+  },
+  blurView: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  gradientText: {
+    color: "#FFAA2C",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  textm: {
+    color: "#fff",
+  },
   page3Container: {
     flex: 1,
     backgroundColor: "#000",
@@ -416,8 +508,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     paddingHorizontal: 15,
     paddingTop: 20,
-    paddingBottom: 120, // Increased padding to avoid overlap with input
-    // backgroundColor: "red",
+    paddingBottom: 120,
   },
   messageBubble: {
     backgroundColor: "#323232",
@@ -436,11 +527,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    // backgroundColor: "#111",
     position: "absolute",
     left: 0,
     right: 0,
-    zIndex: 10, // Ensure it stays above other content
+    zIndex: 10,
   },
   messageInput: {
     flex: 1,
@@ -456,79 +546,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
-  },
-  sendButtonText: {
-    color: "#fff",
-    // fontSize: 14,
-    // fontWeight: "600",
-  },
-  page2Container: {
-    paddingBottom: 100,
-  },
-  messageContainer: {
-    padding: 15,
-    width: "100%",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  txt: {
-    textAlign: "center",
-    padding: 15,
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  input: {
-    color: "#363636",
-    width: width * 0.8,
-    height: height * 0.05,
-    borderColor: "rgba(255,255,255,0.3)",
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 30,
-    marginLeft: -15,
-    marginRight: 15,
-  },
-  column: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: "#323232",
-    padding: 8,
-  },
-  row2: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    gap: 10,
-    width: width * 0.5,
-    alignSelf: "flex-start",
-    backgroundColor: "red",
-  },
-  column2: {
-    height: 30,
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: "#323232",
-    borderRadius: 50,
-  },
-  card1: {
-    flexDirection: "row",
-  },
-  text: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: 500,
-  },
-  text1: {
-    color: "#C3C3C3",
-    fontSize: 12,
-    fontWeight: 500,
   },
   container: {
     flex: 1,
@@ -588,12 +605,6 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     height: 50,
   },
-  Icon22: {
-    resizeMode: "contain",
-    position: "absolute",
-    bottom: 15,
-    // backgroundColor:'red',
-  },
   logo: {
     width: 100,
     height: 40,
@@ -609,13 +620,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
   },
-  // cardsContainer: {
-  //   paddingHorizontal: 15,
-  //   paddingTop: 20,
-  //   paddingBottom: 100,
-  // },
   card: {
-    // justifyContent:'center',
     gap: 10,
     backgroundColor: "#222222",
     borderRadius: 10,
@@ -643,7 +648,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     position: "relative",
     color: "#FFFFFF",
-    // fontSize: 20,
     fontWeight: "700",
     marginBottom: 10,
   },
@@ -652,45 +656,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  cardSubText: {
-    color: "#C8C8C8",
-    fontSize: 14,
-  },
   contentContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 15,
-  },
-  contentContainer2: {
-    flex: 1,
-    // alignItems: 'center',
-    width: width,
-    height: height * 0.45,
-  },
-  page2_text: {
-    flexDirection: "row",
-    width: width,
-    marginTop: 20,
-    marginLeft: 40,
-  },
-  page2_txt: {
-    fontFamily: "Satoshi",
-    color: "#ffff",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  page2_txt2: {
-    fontFamily: "Satoshi",
-    color: "#BEBEBE",
-    fontSize: 20,
-  },
-  photo_page2: {
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    resizeMode: "cover",
-    width: width,
-    height: height * 0.45,
   },
   contentText: {
     color: "#FFFFFF",
@@ -713,10 +683,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
   },
-  navButtonText: {
-    color: "#FFAE35",
+  text: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  text1: {
+    color: "#C3C3C3",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  txt: {
+    textAlign: "center",
+    padding: 15,
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "600",
+  },
+  input: {
+    color: "#363636",
+    width: width * 0.8,
+    height: height * 0.05,
+    borderColor: "rgba(255,255,255,0.3)",
+    borderWidth: 1,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 30,
+    marginLeft: -15,
+    marginRight: 15,
+  },
+  column: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#323232",
+    padding: 8,
   },
   image2: {
     resizeMode: "contain",
@@ -731,5 +734,8 @@ const styles = StyleSheet.create({
   smiley: {
     resizeMode: "contain",
     marginRight: 10,
+  },
+  card1: {
+    flexDirection: "row",
   },
 });
