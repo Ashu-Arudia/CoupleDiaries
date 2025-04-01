@@ -7,12 +7,12 @@
         "./*"
       ]
     },
-    "types": ["react-native-svg"]
+    "types": [
+      "react-native-svg"
+    ]
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "**/*.tsx"
   ]
 }
