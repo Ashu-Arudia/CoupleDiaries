@@ -17,26 +17,35 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Button } from "react-native-paper";
 import { useAppStore } from "./store";
 
-const { width, height } = Dimensions.get("window");
+// Get initial dimensions, but we'll use the hook for updates
+const initialDimensions = Dimensions.get("window");
 
 export default function AddCard() {
+  // Use dimensions hook for responsive layout
+  const { width, height } = useWindowDimensions();
+
   const [date, setDate] = useState("");
-  const [mood, setMood] = useState("");
+  const [mood, setMood] = useState("Curious");
   const [location, setLocation] = useState("");
   const [temperature, setTemperature] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [useTemperature, setUseTemperature] = useState(true);
+  const [useLocation, setUseLocation] = useState(false);
+  const [useSteps, setUseSteps] = useState(false);
 
   // Initialize animation value - important to start at 0 for first render
-  const drawerAnimation = useRef(new Animated.Value(height)).current;
+  const drawerAnimation = useRef(new Animated.Value(initialDimensions.height)).current;
 
   const router = useRouter();
   const { addCard, setCurrentContent } = useAppStore();
@@ -105,6 +114,19 @@ export default function AddCard() {
     // Don't set drawerReady to false here anymore
   }, [drawerVisible]);
 
+  // Update animation when dimensions change (device rotation)
+  useEffect(() => {
+    if (drawerVisible) {
+      // If drawer is visible, update its position
+      Animated.spring(drawerAnimation, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 10,
+      }).start();
+    }
+  }, [width, height, drawerVisible]);
+
   const pickImage = async () => {
     try {
       const { status } =
@@ -144,15 +166,16 @@ export default function AddCard() {
     const cardData = {
       date: date || "29 January 2025",
       mood: mood || "Curious",
-      location: location || "Jakarta",
-      temperature: temperature || "79* F",
+      location: useLocation ? (location || "Jakarta") : "",
+      temperature: useTemperature ? (temperature || "79* F") : "",
       photo: photo || "",
+      steps: useSteps ? "5,243" : "",
     };
 
     console.log("Submitting card:", cardData);
     addCard(cardData);
     setCurrentContent("page1");
-    router.replace({ pathname: "/" });
+    router.replace("/home");
   };
 
   const getCurrentDate = () => {
@@ -219,6 +242,9 @@ export default function AddCard() {
 
   // Modified close drawer function with proper animation completion callback
   const closeDrawer = () => {
+    // Mark drawer as not ready to prevent reopening during animation
+    drawerReady.current = false;
+
     Animated.spring(drawerAnimation, {
       toValue: height,
       useNativeDriver: true,
@@ -228,14 +254,14 @@ export default function AddCard() {
       if (finished) {
         setDrawerVisible(false);
         // Set a small timeout before allowing the drawer to be reopened
-        requestAnimationFrame(() => {
+        setTimeout(() => {
           drawerReady.current = true;
-        });
+        }, 300);
       }
     });
   };
 
-  // For interactive drawer
+  // For interactive drawer with dynamic height
   const translateY = drawerAnimation.interpolate({
     inputRange: [0, height],
     outputRange: [0, height],
@@ -248,6 +274,232 @@ export default function AddCard() {
     outputRange: [0.5, 0],
     extrapolate: "clamp",
   });
+
+  // Create dynamic styles based on current dimensions
+  const dynamicStyles = React.useMemo(() => {
+    return StyleSheet.create({
+      bottomDrawerContent: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: height > 800 ? height * 0.95 : height * 0.9,
+        maxHeight: height - 50,
+        backgroundColor: "#1C1C1E",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: -3,
+        },
+        shadowOpacity: 0.27,
+        shadowRadius: 4.65,
+        elevation: 6,
+      },
+      drawerScrollContent: {
+        backgroundColor: "#1C1C1E",
+        maxHeight: height > 800 ? height * 0.9 : height * 0.9,
+        padding: width > 400 ? 20 : 15,
+      },
+      moodGridContainer: {
+        marginBottom: height > 800 ? 25 : 15,
+      },
+      moodRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: height > 800 ? 10 : 8,
+      },
+      moodBubble: {
+        width: width * 0.28,
+        height: undefined,
+        aspectRatio: 2,
+        backgroundColor: "#2C2C2E",
+        borderRadius: 30,
+        padding: width > 400 ? 10 : 8,
+        alignItems: "center",
+        justifyContent: "center",
+        marginHorizontal: 2,
+      },
+      moodEmoji: {
+        fontSize: width > 400 ? 24 : 20,
+        marginBottom: 5,
+      },
+      moodText: {
+        color: "#FFFFFF",
+        fontSize: width > 400 ? 12 : 10,
+        textAlign: "center",
+      },
+      toggleRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: height > 800 ? 12 : 10,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+      },
+      toggleLabel: {
+        color: "#FFFFFF",
+        fontSize: width > 400 ? 16 : 14,
+        marginLeft: 10,
+      },
+      addImageButton: {
+        width: width * 0.25,
+        height: undefined,
+        aspectRatio: 1,
+        backgroundColor: "#2C2C2E",
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      container1: {
+        width: width,
+        height: height * 0.45,
+        backgroundColor: "black",
+      },
+      container2: {
+        height: height * 0.1,
+        backgroundColor: "black",
+      },
+      container3: {
+        flexDirection: "column",
+        width: width,
+        height: height * 0.36,
+        backgroundColor: "black",
+      },
+      container4: {
+        flex: 1,
+        width: width,
+        backgroundColor: "black",
+      },
+      container: {
+        backgroundColor: "black",
+        height: height,
+        width: width,
+      },
+      inner_container: {
+        width: width,
+        height: height,
+        backgroundColor: "black",
+        flexDirection: "column",
+      },
+      imagePicker: {
+        width: width,
+        height: "100%",
+        backgroundColor: "#222222",
+        justifyContent: "center",
+        alignItems: "center",
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+        overflow: "hidden",
+      },
+      okButton: {
+        position: "absolute",
+        top: 5,
+        right: 5,
+        zIndex: 10,
+        backgroundColor: "#00000026",
+        height: 60,
+        width: 60,
+        borderRadius: 30,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      okButtonText: {
+        fontSize: 20,
+        fontWeight: "bold",
+        tintColor: "white",
+      },
+      previewImage: {
+        width: "100%",
+        height: "100%",
+        borderRadius: 10,
+      },
+      selectedColumn: {
+        flexDirection: "column",
+        borderRadius: 50,
+        width: "80%",
+        marginLeft: 20,
+      },
+      textcont: {
+        marginTop: 10,
+      },
+      text: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "bold",
+        fontFamily: "Satoshi",
+      },
+      moodcont: {
+        flexDirection: "row",
+        marginTop: 10,
+        gap: 8,
+      },
+      gradient: {
+        flexGrow: 1,
+        flexDirection: "row",
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 50,
+        padding: 8,
+        overflow: "hidden",
+      },
+      blurView: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      gradientText: {
+        color: "#FFAA2C",
+        fontSize: 12,
+        fontWeight: "500",
+        fontFamily: "Satoshi",
+      },
+      textm: {
+        color: "#fff",
+        fontFamily: "Satoshi",
+      },
+      record: {},
+      drawer: {
+        backgroundColor: "#222222",
+        width: 30,
+        height: 30,
+        resizeMode: "contain",
+      },
+      drawerButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: "#222222",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 20,
+      },
+      imagePickerText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+      },
+    });
+  }, [width, height]);
+
+  // Function to get emoji for a mood
+  const getMoodEmoji = (currentMood: string) => {
+    const emojis: Record<string, string> = {
+      "Happy": "😊",
+      "Loved": "😍",
+      "Gratitude": "🙏",
+      "Confidence": "😎",
+      "Excitement": "😃",
+      "Angry": "😠",
+      "Fear": "😨",
+      "Sad": "😢",
+      "Hurt": "💔",
+      "Curious": "🤔"
+    };
+    return emojis[currentMood] || "🤔";
+  };
 
   const renderDrawerContent = () => (
     <Modal
@@ -269,7 +521,7 @@ export default function AddCard() {
 
       <Animated.View
         style={[
-          styles.bottomDrawerContent,
+          dynamicStyles.bottomDrawerContent,
           {
             transform: [{ translateY: translateY }],
           },
@@ -279,15 +531,131 @@ export default function AddCard() {
         <View style={styles.drawerHandleContainer}>
           <View style={styles.drawerHandle} />
         </View>
-        <ScrollView style={styles.drawerScrollContent}>
-          <View>
+
+        <ScrollView
+          style={dynamicStyles.drawerScrollContent}
+          contentContainerStyle={styles.drawerScrollContentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.drawerHeader}>
             <Text style={styles.drawerTitle}>Additional Details</Text>
-          </View>
-          <View style={styles.container4_1}>
-            <Text>How are you feeling Now?</Text>
+            <TouchableOpacity onPress={closeDrawer}>
+              <MaterialIcons name="close" size={24} color="#888" />
+            </TouchableOpacity>
           </View>
 
-          {/* Add more drawer content here */}
+          <Text style={styles.drawerSectionTitle}>How are you feeling Now?</Text>
+
+          <View style={dynamicStyles.moodGridContainer}>
+            <View style={dynamicStyles.moodRow}>
+              {[
+                { emoji: "😊", label: "Happy" },
+                { emoji: "😍", label: "Loved" },
+                { emoji: "🙏", label: "Gratitude" }
+              ].map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    dynamicStyles.moodBubble,
+                    mood === item.label && styles.selectedMoodBubble
+                  ]}
+                  onPress={() => setMood(item.label)}
+                >
+                  <Text style={dynamicStyles.moodEmoji}>{item.emoji}</Text>
+                  <Text style={dynamicStyles.moodText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={dynamicStyles.moodRow}>
+              {[
+                { emoji: "😎", label: "Confidence" },
+                { emoji: "😃", label: "Excitement" },
+                { emoji: "😠", label: "Angry" }
+              ].map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    dynamicStyles.moodBubble,
+                    mood === item.label && styles.selectedMoodBubble
+                  ]}
+                  onPress={() => setMood(item.label)}
+                >
+                  <Text style={dynamicStyles.moodEmoji}>{item.emoji}</Text>
+                  <Text style={dynamicStyles.moodText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={dynamicStyles.moodRow}>
+              {[
+                { emoji: "😨", label: "Fear" },
+                { emoji: "😢", label: "Sad" },
+                { emoji: "💔", label: "Hurt" }
+              ].map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    dynamicStyles.moodBubble,
+                    mood === item.label && styles.selectedMoodBubble
+                  ]}
+                  onPress={() => setMood(item.label)}
+                >
+                  <Text style={dynamicStyles.moodEmoji}>{item.emoji}</Text>
+                  <Text style={dynamicStyles.moodText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.toggleContainer}>
+            <View style={dynamicStyles.toggleRow}>
+              <View style={styles.toggleLabelContainer}>
+                <MaterialIcons name="thermostat" size={24} color="#888" />
+                <Text style={dynamicStyles.toggleLabel}>Use Temperature</Text>
+              </View>
+              <Switch
+                value={useTemperature}
+                onValueChange={setUseTemperature}
+                trackColor={{ false: "#444", true: "#FFAA2C" }}
+                thumbColor={"#fff"}
+              />
+            </View>
+
+            <View style={dynamicStyles.toggleRow}>
+              <View style={styles.toggleLabelContainer}>
+                <MaterialIcons name="location-on" size={24} color="#888" />
+                <Text style={dynamicStyles.toggleLabel}>Location</Text>
+              </View>
+              <Switch
+                value={useLocation}
+                onValueChange={setUseLocation}
+                trackColor={{ false: "#444", true: "#FFAA2C" }}
+                thumbColor={"#fff"}
+              />
+            </View>
+
+            <View style={dynamicStyles.toggleRow}>
+              <View style={styles.toggleLabelContainer}>
+                <MaterialIcons name="directions-walk" size={24} color="#888" />
+                <Text style={dynamicStyles.toggleLabel}>Steps</Text>
+              </View>
+              <Switch
+                value={useSteps}
+                onValueChange={setUseSteps}
+                trackColor={{ false: "#444", true: "#FFAA2C" }}
+                thumbColor={"#fff"}
+              />
+            </View>
+          </View>
+
+          <View style={styles.addImageSection}>
+            <Text style={styles.addImageLabel}>Add Image</Text>
+            <TouchableOpacity style={dynamicStyles.addImageButton} onPress={pickImage}>
+              <MaterialIcons name="add-photo-alternate" size={36} color="#888" />
+              <Text style={styles.addImageButtonText}>Add Images</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </Animated.View>
     </Modal>
@@ -296,22 +664,32 @@ export default function AddCard() {
   const renderMainContent = () => (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={dynamicStyles.container}
       keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.inner_container}>
-          <View style={styles.container1}>
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+        <TouchableOpacity
+          style={styles.backButtonMinimal}
+          onPress={handleGoBack}
+        >
+          <Image
+            source={require("../assets/images/arr.png")}
+            style={styles.backIconMinimal}
+          />
+        </TouchableOpacity>
+
+        <View style={dynamicStyles.inner_container}>
+          <View style={dynamicStyles.container1}>
+            <TouchableOpacity style={dynamicStyles.imagePicker} onPress={pickImage}>
               {photo && (
                 <Button
                   mode="contained"
                   onPress={handleSubmit}
-                  style={styles.okButton}
-                  labelStyle={styles.okButtonText}
+                  style={dynamicStyles.okButton}
+                  labelStyle={dynamicStyles.okButtonText}
                 >
                   <Image
                     source={require("../assets/images/icons/star.png")}
@@ -322,7 +700,7 @@ export default function AddCard() {
               {photo ? (
                 <Image
                   source={{ uri: photo }}
-                  style={[styles.previewImage, { opacity: 0.6 }]}
+                  style={[dynamicStyles.previewImage, { opacity: 0.6 }]}
                   onError={(e) => {
                     Alert.alert(
                       "Image Error",
@@ -332,16 +710,16 @@ export default function AddCard() {
                   }}
                 />
               ) : (
-                <Text style={styles.imagePickerText}>Import an Image</Text>
+                <Text style={dynamicStyles.imagePickerText}>Import an Image</Text>
               )}
             </TouchableOpacity>
           </View>
-          <View style={styles.container2}>
-            <View style={styles.selectedColumn}>
-              <View style={styles.textcont}>
-                <Text style={styles.text}>{date}</Text>
+          <View style={dynamicStyles.container2}>
+            <View style={dynamicStyles.selectedColumn}>
+              <View style={dynamicStyles.textcont}>
+                <Text style={dynamicStyles.text}>{date}</Text>
               </View>
-              <View style={styles.moodcont}>
+              <View style={dynamicStyles.moodcont}>
                 <LinearGradient
                   colors={[
                     "rgba(255, 151, 86, 0.7)",
@@ -349,16 +727,16 @@ export default function AddCard() {
                   ]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[styles.gradient, { opacity: 0.6 }]}
+                  style={[dynamicStyles.gradient, { opacity: 0.6 }]}
                 >
-                  <BlurView intensity={100} tint="dark" style={styles.blurView}>
+                  <BlurView intensity={100} tint="dark" style={dynamicStyles.blurView}>
                     <Text
                       style={[
-                        styles.gradientText,
+                        dynamicStyles.gradientText,
                         { fontWeight: "700", fontSize: 13 },
                       ]}
                     >
-                      🤔 Curious
+                      {getMoodEmoji(mood)} {mood}
                     </Text>
                   </BlurView>
                 </LinearGradient>
@@ -366,24 +744,24 @@ export default function AddCard() {
                   colors={["#222222", "#222222"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[styles.gradient]}
+                  style={[dynamicStyles.gradient]}
                 >
                   <MaterialIcons name="location-on" size={20} color="grey" />
-                  <Text style={styles.textm}> {location}</Text>
+                  <Text style={dynamicStyles.textm}> {location}</Text>
                 </LinearGradient>
                 <LinearGradient
                   colors={["#222222", "#222222"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={styles.gradient}
+                  style={dynamicStyles.gradient}
                 >
                   <MaterialIcons name="wb-sunny" size={20} color="grey" />
-                  <Text style={styles.textm}> 75* F</Text>
+                  <Text style={dynamicStyles.textm}> {temperature || "75* F"}</Text>
                 </LinearGradient>
               </View>
             </View>
           </View>
-          <View style={[styles.container3, { paddingHorizontal: 13 }]}>
+          <View style={[dynamicStyles.container3, { paddingHorizontal: 13 }]}>
             <Text style={{ color: "#AAAAAA", fontWeight: "700", fontSize: 13 }}>
               3:49 AM
             </Text>
@@ -398,7 +776,7 @@ export default function AddCard() {
               Say what your heart desires...
             </Text>
           </View>
-          <View style={styles.container4}>
+          <View style={dynamicStyles.container4}>
             <View
               style={{
                 justifyContent: "space-between",
@@ -433,16 +811,16 @@ export default function AddCard() {
               <TouchableOpacity>
                 <Image
                   source={require("../assets/images/icons/start_record.png")}
-                  style={styles.record}
+                  style={dynamicStyles.record}
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.drawerButton}
+                style={dynamicStyles.drawerButton}
                 onPress={openDrawer}
               >
                 <Image
                   source={require("../assets/images/icons/info.png")}
-                  style={styles.drawer}
+                  style={dynamicStyles.drawer}
                 />
               </TouchableOpacity>
             </View>
@@ -453,6 +831,11 @@ export default function AddCard() {
     </KeyboardAvoidingView>
   );
 
+  const handleGoBack = () => {
+    setCurrentContent("default");
+    router.replace("/home");
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {renderMainContent()}
@@ -461,15 +844,6 @@ export default function AddCard() {
 }
 
 const styles = StyleSheet.create({
-  drawerButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#222222",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 20,
-  },
   drawerIcon: {
     width: 30,
     height: 30,
@@ -490,211 +864,99 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "black",
   },
-  bottomDrawerContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.95, // 80% of screen height
-    backgroundColor: "#222222",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: "hidden", // This prevents content from showing outside rounded corners
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
-    shadowOpacity: 0.27,
-    shadowRadius: 4.65,
-    elevation: 6,
-  },
   drawerHandleContainer: {
     alignItems: "center",
     paddingVertical: 12,
-    backgroundColor: "#FFAA2C",
+    backgroundColor: "#1C1C1E",
   },
   drawerHandle: {
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "white",
+    backgroundColor: "#888",
   },
-  drawerScrollContent: {
-    backgroundColor: "pink",
-    // flex: 1,
-    maxHeight: height * 0.95,
-    // flex: 1,
-    padding: 20,
+  drawerScrollContentContainer: {
+    paddingBottom: 30, // Add some bottom padding for scrolling
   },
-  container4_1: {
-    // flex: 1,
-    backgroundColor: "red",
-    height: "100%",
-  },
-  drawerTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
+  drawerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
-  drawerText: {
+  drawerSectionTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  drawerTitle: {
+    color: "#C9C9C9",
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  toggleContainer: {
+    marginBottom: 25,
+  },
+  toggleLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  addImageSection: {
+    marginBottom: 20,
+  },
+  addImageLabel: {
     color: "#FFFFFF",
     fontSize: 16,
     marginBottom: 15,
   },
-  inner_container: {
-    width: width,
-    height: height,
-    backgroundColor: "black",
-    flexDirection: "column",
-  },
-  container1: {
-    width: width,
-    height: height * 0.45,
-    backgroundColor: "black",
-  },
-  okButton: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    zIndex: 10,
-    backgroundColor: "#00000026",
-    height: 60,
-    width: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  okButtonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    tintColor: "white",
-  },
-  container2: {
-    height: height * 0.1,
-    backgroundColor: "black",
-  },
-  container3: {
-    flexDirection: "column",
-    width: width,
-    height: height * 0.36,
-    backgroundColor: "black",
-  },
-  selectedColumn: {
-    flexDirection: "column",
-    borderRadius: 50,
-    width: "80%",
-    marginLeft: 20,
-  },
-  moodcont: {
-    flexDirection: "row",
-    marginTop: 10,
-    gap: 8,
-  },
-  textcont: {
-    marginTop: 10,
-  },
-  gradient: {
-    flexGrow: 1,
-    flexDirection: "row",
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 50,
-    padding: 8,
-    overflow: "hidden",
-  },
-  blurView: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  gradientText: {
-    color: "#FFAA2C",
+  addImageButtonText: {
+    color: "#888",
     fontSize: 12,
-    fontWeight: "500",
-    fontFamily: "Satoshi",
-  },
-  textm: {
-    color: "#fff",
-    fontFamily: "Satoshi",
-  },
-  text: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-    fontFamily: "Satoshi",
-  },
-  container4: {
-    flex: 1,
-    width: width,
-    backgroundColor: "black",
-  },
-  record: {},
-  drawer: {
-    backgroundColor: "#222222",
-    width: 30,
-    height: 30,
-    resizeMode: "contain",
-  },
-  container: {
-    backgroundColor: "black",
-    height: height,
-    width: width,
+    marginTop: 5,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
   },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 20,
+  selectedMoodBubble: {
+    backgroundColor: "#FFAA2C50",
+    borderWidth: 1,
+    borderColor: "#FFAA2C",
   },
-  imagePicker: {
-    width: width,
-    height: "100%",
-    backgroundColor: "#222222",
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    overflow: "hidden",
+    padding: 10,
   },
-  previewImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
+  backButton: {
+    padding: 5,
   },
-  imagePickerText: {
+  backButtonIcon: {
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#FFFFFF",
-    fontSize: 16,
   },
-  input: {
-    width: width * 0.8,
-    height: 50,
-    backgroundColor: "#222222",
-    color: "#FFFFFF",
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignSelf: "center",
+  spacer: {
+    width: 24,
   },
-  submitButton: {
-    backgroundColor: "#FFAE35",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  backButtonMinimal: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 999,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 20,
-    alignSelf: "center",
-    marginTop: 20,
-    marginBottom: 20,
   },
-  submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+  backIconMinimal: {
+    width: 24,
+    height: 24,
+    tintColor: 'white',
   },
 });

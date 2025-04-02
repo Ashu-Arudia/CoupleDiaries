@@ -126,7 +126,6 @@ export default function HomeScreen() {
   };
 
   const handleCardPress = (card: Card) => {
-    console.log("Card pressed:", card);
     router.push({
       pathname: "/CardDetails",
       params: {
@@ -139,8 +138,13 @@ export default function HomeScreen() {
     });
   };
 
+  const handleNavigation = (route: string) => {
+    if (route) {
+      router.push(route);
+    }
+  };
+
   const renderContent = () => {
-    console.log("Rendering content for:", currentContent, "Cards:", cards);
     switch (currentContent) {
       case "default":
         return (
@@ -253,9 +257,6 @@ export default function HomeScreen() {
                       : (card.photo as number)
                   }
                   style={[styles.photo, { opacity: 0.6 }]}
-                  onError={(e) =>
-                    console.log("Image load error:", e.nativeEvent)
-                  }
                 />
                 <View style={styles.selectedColumn}>
                   <View style={styles.textcont}>
@@ -308,15 +309,8 @@ export default function HomeScreen() {
           </ScrollView>
         );
       case "page2":
-        return (
-          <TouchableOpacity
-            style={styles.contentContainer}
-            onPress={() => router.push("/add_card")}
-            activeOpacity={1}
-          >
-            <Text style={styles.contentText}>Opening diary...</Text>
-          </TouchableOpacity>
-        );
+        handleNavigation("/add_card");
+        return null;
       case "page3":
         return (
           <View style={styles.page3Container}>
@@ -351,11 +345,8 @@ export default function HomeScreen() {
           </View>
         );
       case "page4":
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>Welcome to Settings Content!</Text>
-          </View>
-        );
+        handleNavigation("/settings");
+        return null;
       default:
         return null;
     }
@@ -414,7 +405,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.navButton}
-            onPress={() => setCurrentContent("page2")}
+            onPress={() => handleNavigation("/add_card")}
           >
             <Image
               source={require("../assets/images/Home_page_icons/diary.png")}
@@ -438,7 +429,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.navButton}
-            onPress={() => setCurrentContent("page4")}
+            onPress={() => handleNavigation("/settings")}
           >
             <Image
               source={require("../assets/images/Home_page_icons/settings.png")}

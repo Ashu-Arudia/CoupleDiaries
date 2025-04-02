@@ -17,9 +17,9 @@ export default function GetStarted() {
   const fadeImage = useRef(new Animated.Value(0)).current;
   const slideLogo = useRef(new Animated.Value(-50)).current;
   const fadeText1 = useRef(new Animated.Value(0)).current;
-  const slideText1 = useRef(new Animated.Value(20)).current;
+  const slideText1 = useRef(new Animated.Value(10)).current;
   const fadeText2 = useRef(new Animated.Value(0)).current;
-  const slideText2 = useRef(new Animated.Value(20)).current;
+  const slideText2 = useRef(new Animated.Value(10)).current;
   const scaleButton = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
