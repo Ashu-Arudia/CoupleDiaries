@@ -25,9 +25,7 @@ export default function Layout() {
     if (initializing) return;
 
     const inAuthGroup = segments[0] === "(Auth)";
-    if (user && !inAuthGroup) {
-      router.replace("/(Auth)/home");
-    } else if (!user && inAuthGroup) {
+    if (!user && inAuthGroup) {
       router.replace("/");
     }
   }, [user, initializing]);
