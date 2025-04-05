@@ -1,3 +1,4 @@
+import auth from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { setUserNameAndAge } from "./firebase";
 
 import * as Progress from "react-native-progress";
 const { width, height } = Dimensions.get("window");
@@ -18,22 +20,33 @@ const { width, height } = Dimensions.get("window");
 export default function App() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [cnfPassword, setcnfPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [bio, setBio] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [partner_name, set_p_name] = useState("");
   const [partner_email, set_p_email] = useState("");
   const [date, setDate] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCnfPassword, setShowCnfPassword] = useState(false);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const genders = ["Male", "Female", "Other"];
   const [loading, setLoading] = useState(false);
-  const [isSignIn, setIsSignIn] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSignup = async () => {
+    try {
+      // Sign up the user (verification happens here)
+
+      // After successful signup, set name and age
+      const user = auth().currentUser;
+      if (user) await setUserNameAndAge(user.uid, name, parseInt(age));
+      else {
+        console.warn("No user is not there");
+      } // Convert age to number
+
+      console.log("Signup successful and name/age added!");
+      setCurrentStep(currentStep + 1); // Redirect to authenticated section
+    } catch (err: any) {
+      setError("Signup failed: " + err.message);
+    }
+  };
 
   let next_btn = "";
   const progress = currentStep / 4;
@@ -53,7 +66,7 @@ export default function App() {
   const handleNext = async () => {
     if (!validateStep()) return;
     if (currentStep == 1) {
-      setCurrentStep(currentStep + 1);
+      handleSignup();
     } else if (currentStep == 2) {
       setCurrentStep(currentStep + 1);
     } else {
