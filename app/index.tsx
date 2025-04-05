@@ -117,7 +117,7 @@ export default function GetStarted() {
           { transform: [{ scale: scaleButton }] },
         ]}
       >
-        <Text style={styles.button} onPress={() => router.push("/login")}>
+        <Text style={styles.button} onPress={() => router.push("/Signup")}>
           Get Started
         </Text>
       </Animated.View>
