@@ -76,12 +76,12 @@ export default function GetStarted() {
   return (
     <View style={styles.container}>
       <Animated.Image
-        source={require("../../assets/images/image-1.jpg")}
+        source={require("../assets/images/image-1.jpg")}
         style={[styles.mainImage, { opacity: fadeImage }]}
         resizeMode="contain"
       />
       <Animated.Image
-        source={require("../../assets/images/logo.png")}
+        source={require("../assets/images/logo.png")}
         style={[styles.logo, { transform: [{ translateY: slideLogo }] }]}
         resizeMode="contain"
       />
@@ -117,7 +117,7 @@ export default function GetStarted() {
           { transform: [{ scale: scaleButton }] },
         ]}
       >
-        <Text style={styles.button} onPress={() => router.push("/home")}>
+        <Text style={styles.button} onPress={() => router.push("/login")}>
           Get Started
         </Text>
       </Animated.View>

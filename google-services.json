@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "993068559051",
+    "project_id": "couplediary-1c6cd",
+    "storage_bucket": "couplediary-1c6cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993068559051:android:68cb7c94b064479878c94e",
+        "android_client_info": {
+          "package_name": "com.boulevardlegacy.couplediary"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "993068559051-f1vn3l644gijisniu3pmv7fl1i23e98d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boulevardlegacy.couplediary",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "993068559051-d990b6ghtc6qvbrouppege6iintm6p7s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLjTCNiCmO4K7XKdwnEqwe-hy6s4cywDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "993068559051-d990b6ghtc6qvbrouppege6iintm6p7s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "993068559051-0gneb3l9ri6jsefecgosucohtlo0hsgc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.boulevardlegacy.couplediary"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

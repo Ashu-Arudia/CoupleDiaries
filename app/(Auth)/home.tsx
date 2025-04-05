@@ -3,16 +3,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    BackHandler,
-    Dimensions,
-    Image,
-    Keyboard,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  Dimensions,
+  Image,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Card, useAppStore } from "./store";
 
@@ -152,11 +152,11 @@ export default function HomeScreen() {
             <View style={[styles.card]}>
               <View style={[styles.container2, styles.box]}>
                 <Image
-                  source={require("../assets/images/pp2.png")}
+                  source={require("../../assets/images/pp2.png")}
                   style={[styles.image, styles.frontImage]}
                 />
                 <Image
-                  source={require("../assets/images/pp3.png")}
+                  source={require("../../assets/images/pp3.png")}
                   style={[styles.image, styles.backImage]}
                 />
               </View>
@@ -171,7 +171,7 @@ export default function HomeScreen() {
                 </Text>
                 <View style={styles.boxImg}>
                   <Image
-                    source={require("../assets/images/Home_page_icons/glass.png")}
+                    source={require("../../assets/images/Home_page_icons/glass.png")}
                     style={[styles.image2]}
                   />
                 </View>
@@ -214,7 +214,7 @@ export default function HomeScreen() {
             <View style={styles.card}>
               <View style={styles.card1}>
                 <Image
-                  source={require("../assets/images/Home_page_icons/smiley.png")}
+                  source={require("../../assets/images/Home_page_icons/smiley.png")}
                   style={styles.smiley}
                 />
                 <Text style={styles.cardTitle}>What made you smile today?</Text>
@@ -245,7 +245,7 @@ export default function HomeScreen() {
               >
                 <View style={styles.play}>
                   <Image
-                    source={require("../assets/images/icons/play.png")}
+                    source={require("../../assets/images/icons/play.png")}
                     style={[styles.playImg]}
                   />
                 </View>
@@ -339,7 +339,7 @@ export default function HomeScreen() {
                 style={styles.sendButton}
                 onPress={handleSendMessage}
               >
-                <Image source={require("../assets/images/icons/send.png")} />
+                <Image source={require("../../assets/images/icons/send.png")} />
               </TouchableOpacity>
             </View>
           </View>
@@ -358,17 +358,17 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <TouchableOpacity style={styles.profilePicContainer}>
             <Image
-              source={require("../assets/images/pp2.png")}
+              source={require("../../assets/images/pp2.png")}
               style={styles.profilePic}
             />
           </TouchableOpacity>
           <Image
-            source={require("../assets/images/logo.png")}
+            source={require("../../assets/images/logo.png")}
             style={styles.logo}
           />
           <TouchableOpacity style={styles.notificationButton}>
             <Image
-              source={require("../assets/images/notification.png")}
+              source={require("../../assets/images/notification.png")}
               style={styles.notificationIcon}
             />
           </TouchableOpacity>
@@ -384,7 +384,7 @@ export default function HomeScreen() {
             onPress={() => setCurrentContent("default")}
           >
             <Image
-              source={require("../assets/images/Home_page_icons/home.png")}
+              source={require("../../assets/images/Home_page_icons/home.png")}
               style={[
                 styles.Icon,
                 currentContent === "default" && { tintColor: "#FFAA2C" },
@@ -396,7 +396,7 @@ export default function HomeScreen() {
             onPress={() => setCurrentContent("page1")}
           >
             <Image
-              source={require("../assets/images/Home_page_icons/play.png")}
+              source={require("../../assets/images/Home_page_icons/play.png")}
               style={[
                 styles.Icon,
                 currentContent === "page1" && { tintColor: "#FFAA2C" },
@@ -408,7 +408,7 @@ export default function HomeScreen() {
             onPress={() => handleNavigation("/add_card")}
           >
             <Image
-              source={require("../assets/images/Home_page_icons/diary.png")}
+              source={require("../../assets/images/Home_page_icons/diary.png")}
               style={[
                 styles.Icon2,
                 currentContent === "page2" && { height: 60 },
@@ -420,7 +420,7 @@ export default function HomeScreen() {
             onPress={() => setCurrentContent("page3")}
           >
             <Image
-              source={require("../assets/images/Home_page_icons/user.png")}
+              source={require("../../assets/images/Home_page_icons/user.png")}
               style={[
                 styles.Icon,
                 currentContent === "page3" && { tintColor: "#FFAA2C" },
@@ -432,7 +432,7 @@ export default function HomeScreen() {
             onPress={() => handleNavigation("/settings")}
           >
             <Image
-              source={require("../assets/images/Home_page_icons/settings.png")}
+              source={require("../../assets/images/Home_page_icons/settings.png")}
               style={[
                 styles.Icon,
                 currentContent === "page4" && { tintColor: "#FFAA2C" },

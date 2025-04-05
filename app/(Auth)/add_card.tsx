@@ -7,21 +7,21 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    PanResponder,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Button } from "react-native-paper";
@@ -45,7 +45,9 @@ export default function AddCard() {
   const [useSteps, setUseSteps] = useState(false);
 
   // Initialize animation value - important to start at 0 for first render
-  const drawerAnimation = useRef(new Animated.Value(initialDimensions.height)).current;
+  const drawerAnimation = useRef(
+    new Animated.Value(initialDimensions.height)
+  ).current;
 
   const router = useRouter();
   const { addCard, setCurrentContent } = useAppStore();
@@ -166,8 +168,8 @@ export default function AddCard() {
     const cardData = {
       date: date || "29 January 2025",
       mood: mood || "Curious",
-      location: useLocation ? (location || "Jakarta") : "",
-      temperature: useTemperature ? (temperature || "79* F") : "",
+      location: useLocation ? location || "Jakarta" : "",
+      temperature: useTemperature ? temperature || "79* F" : "",
       photo: photo || "",
       steps: useSteps ? "5,243" : "",
     };
@@ -487,16 +489,16 @@ export default function AddCard() {
   // Function to get emoji for a mood
   const getMoodEmoji = (currentMood: string) => {
     const emojis: Record<string, string> = {
-      "Happy": "😊",
-      "Loved": "😍",
-      "Gratitude": "🙏",
-      "Confidence": "😎",
-      "Excitement": "😃",
-      "Angry": "😠",
-      "Fear": "😨",
-      "Sad": "😢",
-      "Hurt": "💔",
-      "Curious": "🤔"
+      Happy: "😊",
+      Loved: "😍",
+      Gratitude: "🙏",
+      Confidence: "😎",
+      Excitement: "😃",
+      Angry: "😠",
+      Fear: "😨",
+      Sad: "😢",
+      Hurt: "💔",
+      Curious: "🤔",
     };
     return emojis[currentMood] || "🤔";
   };
@@ -544,20 +546,22 @@ export default function AddCard() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.drawerSectionTitle}>How are you feeling Now?</Text>
+          <Text style={styles.drawerSectionTitle}>
+            How are you feeling Now?
+          </Text>
 
           <View style={dynamicStyles.moodGridContainer}>
             <View style={dynamicStyles.moodRow}>
               {[
                 { emoji: "😊", label: "Happy" },
                 { emoji: "😍", label: "Loved" },
-                { emoji: "🙏", label: "Gratitude" }
+                { emoji: "🙏", label: "Gratitude" },
               ].map((item, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     dynamicStyles.moodBubble,
-                    mood === item.label && styles.selectedMoodBubble
+                    mood === item.label && styles.selectedMoodBubble,
                   ]}
                   onPress={() => setMood(item.label)}
                 >
@@ -571,13 +575,13 @@ export default function AddCard() {
               {[
                 { emoji: "😎", label: "Confidence" },
                 { emoji: "😃", label: "Excitement" },
-                { emoji: "😠", label: "Angry" }
+                { emoji: "😠", label: "Angry" },
               ].map((item, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     dynamicStyles.moodBubble,
-                    mood === item.label && styles.selectedMoodBubble
+                    mood === item.label && styles.selectedMoodBubble,
                   ]}
                   onPress={() => setMood(item.label)}
                 >
@@ -591,13 +595,13 @@ export default function AddCard() {
               {[
                 { emoji: "😨", label: "Fear" },
                 { emoji: "😢", label: "Sad" },
-                { emoji: "💔", label: "Hurt" }
+                { emoji: "💔", label: "Hurt" },
               ].map((item, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     dynamicStyles.moodBubble,
-                    mood === item.label && styles.selectedMoodBubble
+                    mood === item.label && styles.selectedMoodBubble,
                   ]}
                   onPress={() => setMood(item.label)}
                 >
@@ -651,8 +655,15 @@ export default function AddCard() {
 
           <View style={styles.addImageSection}>
             <Text style={styles.addImageLabel}>Add Image</Text>
-            <TouchableOpacity style={dynamicStyles.addImageButton} onPress={pickImage}>
-              <MaterialIcons name="add-photo-alternate" size={36} color="#888" />
+            <TouchableOpacity
+              style={dynamicStyles.addImageButton}
+              onPress={pickImage}
+            >
+              <MaterialIcons
+                name="add-photo-alternate"
+                size={36}
+                color="#888"
+              />
               <Text style={styles.addImageButtonText}>Add Images</Text>
             </TouchableOpacity>
           </View>
@@ -676,14 +687,17 @@ export default function AddCard() {
           onPress={handleGoBack}
         >
           <Image
-            source={require("../assets/images/arr.png")}
+            source={require("../../assets/images/arr.png")}
             style={styles.backIconMinimal}
           />
         </TouchableOpacity>
 
         <View style={dynamicStyles.inner_container}>
           <View style={dynamicStyles.container1}>
-            <TouchableOpacity style={dynamicStyles.imagePicker} onPress={pickImage}>
+            <TouchableOpacity
+              style={dynamicStyles.imagePicker}
+              onPress={pickImage}
+            >
               {photo && (
                 <Button
                   mode="contained"
@@ -692,7 +706,7 @@ export default function AddCard() {
                   labelStyle={dynamicStyles.okButtonText}
                 >
                   <Image
-                    source={require("../assets/images/icons/star.png")}
+                    source={require("../../assets/images/icons/star.png")}
                     style={{ tintColor: "white" }}
                   />
                 </Button>
@@ -710,7 +724,9 @@ export default function AddCard() {
                   }}
                 />
               ) : (
-                <Text style={dynamicStyles.imagePickerText}>Import an Image</Text>
+                <Text style={dynamicStyles.imagePickerText}>
+                  Import an Image
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -729,7 +745,11 @@ export default function AddCard() {
                   end={{ x: 1, y: 1 }}
                   style={[dynamicStyles.gradient, { opacity: 0.6 }]}
                 >
-                  <BlurView intensity={100} tint="dark" style={dynamicStyles.blurView}>
+                  <BlurView
+                    intensity={100}
+                    tint="dark"
+                    style={dynamicStyles.blurView}
+                  >
                     <Text
                       style={[
                         dynamicStyles.gradientText,
@@ -756,7 +776,10 @@ export default function AddCard() {
                   style={dynamicStyles.gradient}
                 >
                   <MaterialIcons name="wb-sunny" size={20} color="grey" />
-                  <Text style={dynamicStyles.textm}> {temperature || "75* F"}</Text>
+                  <Text style={dynamicStyles.textm}>
+                    {" "}
+                    {temperature || "75* F"}
+                  </Text>
                 </LinearGradient>
               </View>
             </View>
@@ -810,7 +833,7 @@ export default function AddCard() {
               </View>
               <TouchableOpacity>
                 <Image
-                  source={require("../assets/images/icons/start_record.png")}
+                  source={require("../../assets/images/icons/start_record.png")}
                   style={dynamicStyles.record}
                 />
               </TouchableOpacity>
@@ -819,7 +842,7 @@ export default function AddCard() {
                 onPress={openDrawer}
               >
                 <Image
-                  source={require("../assets/images/icons/info.png")}
+                  source={require("../../assets/images/icons/info.png")}
                   style={dynamicStyles.drawer}
                 />
               </TouchableOpacity>
@@ -946,17 +969,17 @@ const styles = StyleSheet.create({
     width: 24,
   },
   backButtonMinimal: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     left: 10,
     zIndex: 999,
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 20,
   },
   backIconMinimal: {
     width: 24,
     height: 24,
-    tintColor: 'white',
+    tintColor: "white",
   },
 });

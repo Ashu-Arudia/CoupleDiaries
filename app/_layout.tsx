@@ -1,15 +1,55 @@
-import { Stack } from 'expo-router';
+import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
 
 export default function Layout() {
+  const [initializing, setinitializing] = useState(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
+  const router = useRouter();
+  const segments = useSegments();
+
+  const onAuthStateChanged = (user: FirebaseAuthTypes.User | null) => {
+    console.log("onAuthStateChanged", user);
+    setUser(user);
+    if (initializing) setinitializing(false);
+  };
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber;
+  }, []);
+
+  useEffect(() => {
+    if (initializing) return;
+
+    const inAuthGroup = segments[0] === "(Auth)";
+    if (user && !inAuthGroup) {
+      router.replace("/(Auth)/home");
+    } else if (!user && inAuthGroup) {
+      router.replace("/");
+    }
+  }, [user, initializing]);
+
+  if (initializing) {
+    return (
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+        }}
+      >
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="settings" options={{ headerShown: false }} />
-      {/* <Stack.Screen name="tab" options={{ headerShown: false }} /> */}
+      <Stack.Screen name="(Auth)" options={{ headerShown: false }} />
     </Stack>
   );
 }

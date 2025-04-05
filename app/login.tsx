@@ -1,4 +1,6 @@
+import auth from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
+import { FirebaseError } from "firebase/app";
 import React, { useState } from "react";
 import {
   Dimensions,
@@ -29,10 +31,36 @@ export default function App() {
   const [showCnfPassword, setShowCnfPassword] = useState(false);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const genders = ["Male", "Female", "Other"];
+  const [loading, setLoading] = useState(false);
 
   let next_btn = "";
-
   const progress = currentStep / 4;
+
+  const signUp = async () => {
+    setLoading(true);
+    try {
+      await auth().createUserWithEmailAndPassword(email, password);
+      alert("Check your emails!");
+    } catch (e: any) {
+      const err = e as FirebaseError;
+      alert("Registration failed: " + err.message);
+      return false;
+    } finally {
+      setLoading(false);
+      return true;
+    }
+  };
+  const signIn = async () => {
+    setLoading(true);
+    try {
+      await auth().signInWithEmailAndPassword(email, password);
+    } catch (e: any) {
+      const err = e as FirebaseError;
+      alert("Sign In failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateStep = () => {
     if (currentStep === 1 && email.trim() === "") {
@@ -54,13 +82,19 @@ export default function App() {
     return true;
   };
 
-  const handleNext = () => {
-    if (validateStep() && currentStep < 5) {
-      setCurrentStep(currentStep + 1);
-    } else if (currentStep === 5) {
-      alert(
-        "Login Complete! Data: " + JSON.stringify({ email, password, otp, bio })
-      );
+  const handleNext = async () => {
+    if (validateStep() && currentStep === 1) {
+      const Signupdata = {
+        email: email,
+        password: password,
+      };
+      const signupSuccess = await signUp();
+
+      if (signupSuccess) {
+        setCurrentStep(2);
+      } else {
+        alert("Error");
+      }
     }
   };
 

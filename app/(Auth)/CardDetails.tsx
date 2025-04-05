@@ -4,22 +4,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
 // Map for initial cards' require results (update with actual numbers)
 const assetMap: Record<string, any> = {
-  "123": require("../assets/images/Home_page_icons/photo1.png"),
-  "124": require("../assets/images/Home_page_icons/photo2.png"),
+  "123": require("../../assets/images/Home_page_icons/photo1.png"),
+  "124": require("../../assets/images/Home_page_icons/photo2.png"),
 };
 
 export default function CardDetails() {
@@ -36,16 +36,16 @@ export default function CardDetails() {
 
   const getMoodEmoji = (mood: string) => {
     const emojis: Record<string, string> = {
-      "Happy": "😊",
-      "Loved": "😍",
-      "Gratitude": "🙏",
-      "Confidence": "😎",
-      "Excitement": "😃",
-      "Angry": "😠",
-      "Fear": "😨",
-      "Sad": "😢",
-      "Hurt": "💔",
-      "Curious": "🤔"
+      Happy: "😊",
+      Loved: "😍",
+      Gratitude: "🙏",
+      Confidence: "😎",
+      Excitement: "😃",
+      Angry: "😠",
+      Fear: "😨",
+      Sad: "😢",
+      Hurt: "💔",
+      Curious: "🤔",
     };
     return emojis[mood] || "🤔";
   };
@@ -65,10 +65,10 @@ export default function CardDetails() {
         photoSource = assetMap[photoParam]; // Mapped require result
       } else {
         console.log("Invalid photo param:", photoParam);
-        photoSource = require("../assets/images/Home_page_icons/photo1.png"); // Fallback
+        photoSource = require("../../assets/images/Home_page_icons/photo1.png"); // Fallback
       }
     } else {
-      photoSource = require("../assets/images/Home_page_icons/photo1.png");
+      photoSource = require("../../assets/images/Home_page_icons/photo1.png");
     }
 
     if (
@@ -100,14 +100,14 @@ export default function CardDetails() {
 
   const formatDate = (dateString: string) => {
     // Extract day of week if it exists in the string
-    const parts = dateString.split('|');
+    const parts = dateString.split("|");
     if (parts.length > 1) {
-      return parts[0].trim() + ' | ' + parts[1].trim();
+      return parts[0].trim() + " | " + parts[1].trim();
     }
 
     // If no day of week in the string, add "Saturday" as default
     // This is just for demo purposes to match the image
-    return dateString + ' | Saturday';
+    return dateString + " | Saturday";
   };
 
   return (
@@ -115,26 +115,26 @@ export default function CardDetails() {
       <StatusBar barStyle="light-content" />
 
       {/* Back Button - Absolute positioned over everything */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <Image
-          source={require("../assets/images/arr.png")}
+          source={require("../../assets/images/arr.png")}
           style={styles.backIcon}
         />
       </TouchableOpacity>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Image Section */}
         <View style={styles.imageSection}>
           <Image
             source={
               cardDetails.photo ||
-              require("../assets/images/Home_page_icons/photo1.png")
+              require("../../assets/images/Home_page_icons/photo1.png")
             }
             style={styles.backgroundPhoto}
-            defaultSource={require("../assets/images/Home_page_icons/photo1.png")}
+            defaultSource={require("../../assets/images/Home_page_icons/photo1.png")}
           />
         </View>
 
@@ -175,15 +175,14 @@ export default function CardDetails() {
           {/* Note Text Preview (just placeholder text to show the design) */}
           <View style={styles.noteContainer}>
             <Text style={styles.noteText}>
-              So, today started out slow. I woke up around 7:30,
-              and honestly, I felt kind of groggy. I think I need to
-              start sleeping earlier. Coffee helped, though—
-              always does.
+              So, today started out slow. I woke up around 7:30, and honestly, I
+              felt kind of groggy. I think I need to start sleeping earlier.
+              Coffee helped, though— always does.
             </Text>
 
             <Text style={styles.noteText}>
-              Work was... fine. Actually, I had this moment
-              where I felt super productive.
+              Work was... fine. Actually, I had this moment where I felt super
+              productive.
             </Text>
           </View>
         </View>
@@ -212,8 +211,8 @@ const styles = StyleSheet.create({
     width: width,
   },
   backgroundPhoto: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     resizeMode: "cover",
   },
   backButton: {
@@ -292,17 +291,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   playButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 30,
-    alignSelf: 'center',
+    alignSelf: "center",
     zIndex: 10,
   },
   playButton: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#FFAA2C',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFAA2C",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

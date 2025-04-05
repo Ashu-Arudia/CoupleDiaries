@@ -1,15 +1,16 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import auth from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAppStore } from "./store";
 
@@ -64,10 +65,6 @@ export default function SettingsScreen() {
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleLogout = () => {
-    router.replace("/login");
-  };
-
   const handleBackToHome = () => {
     setCurrentContent("default");
     router.replace("/home");
@@ -80,7 +77,7 @@ export default function SettingsScreen() {
         onPress={handleBackToHome}
       >
         <Image
-          source={require("../assets/images/arr.png")}
+          source={require("../../assets/images/arr.png")}
           style={styles.backIconMinimal}
         />
       </TouchableOpacity>
@@ -88,9 +85,12 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollContainer}>
         {/* Profile Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.profilePicContainer} onPress={handleBackToHome}>
+          <TouchableOpacity
+            style={styles.profilePicContainer}
+            onPress={handleBackToHome}
+          >
             <Image
-              source={require("../assets/images/pp2.png")}
+              source={require("../../assets/images/pp2.png")}
               style={styles.profilePic}
             />
           </TouchableOpacity>
@@ -105,11 +105,11 @@ export default function SettingsScreen() {
         <View style={styles.anniversaryCard}>
           <View style={styles.profileImages}>
             <Image
-              source={require("../assets/images/pp2.png")}
+              source={require("../../assets/images/pp2.png")}
               style={styles.profileImage}
             />
             <Image
-              source={require("../assets/images/pp2.png")}
+              source={require("../../assets/images/pp2.png")}
               style={[styles.profileImage, styles.secondProfileImage]}
             />
           </View>
@@ -119,7 +119,7 @@ export default function SettingsScreen() {
 
           <View style={styles.celebrationIcon}>
             <Image
-              source={require("../assets/images/Home_page_icons/glass.png")}
+              source={require("../../assets/images/Home_page_icons/glass.png")}
               style={styles.champagneIcon}
             />
           </View>
@@ -184,7 +184,10 @@ export default function SettingsScreen() {
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => auth().signOut()}
+        >
           <MaterialIcons name="logout" size={24} color="#ffffff" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -332,17 +335,17 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   backButtonMinimal: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     left: 10,
     zIndex: 999,
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 20,
   },
   backIconMinimal: {
     width: 24,
     height: 24,
-    tintColor: 'white',
+    tintColor: "white",
   },
 });

@@ -23,7 +23,7 @@ export const useAppStore = create<{
       mood: "Happy",
       location: "Munich",
       temperature: "79° F",
-      photo: require("../assets/images/Home_page_icons/photo1.png"),
+      photo: require("../../assets/images/Home_page_icons/photo1.png"),
     },
     {
       id: "2",
@@ -31,7 +31,7 @@ export const useAppStore = create<{
       mood: "Happy",
       location: "Munich",
       temperature: "79° F",
-      photo: require("../assets/images/Home_page_icons/photo2.png"),
+      photo: require("../../assets/images/Home_page_icons/photo2.png"),
     },
   ],
   currentContent: "default",
