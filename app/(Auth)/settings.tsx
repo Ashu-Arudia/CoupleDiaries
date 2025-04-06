@@ -27,48 +27,92 @@ export default function SettingsScreen() {
   const { username, age, partner_name } = userData;
 
   // Anniversary countdown calculation
-  const ANNIVERSARY_DATE = new Date("2023-06-15");
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
+  const [years, setYears] = useState(0);
 
+  // Add the getOrdinalNum function for proper anniversary number display
+  const getOrdinalNum = (n: number) => {
+    if (n === 0) return "upcoming"; // If it's 0 years, show "upcoming" instead of "0th"
+
+    let suffix = "th";
+    if (n % 100 < 11 || n % 100 > 13) {
+      switch (n % 10) {
+        case 1: suffix = "st"; break;
+        case 2: suffix = "nd"; break;
+        case 3: suffix = "rd"; break;
+      }
+    }
+    return n + suffix;
+  };
+
+  // Add a function to recalculate countdown when date changes
+  const recalculateCountdown = (dateString: string) => {
+    const today = new Date();
+    const anniversaryDate = new Date(dateString);
+
+    // Create next anniversary date with the same month and day in current/next year
+    let nextAnniversary = new Date(today.getFullYear(),
+                                anniversaryDate.getMonth(),
+                                anniversaryDate.getDate(),
+                                0, 0, 0, 0);
+
+    // If the anniversary has already passed this year, set it to next year
+    if (today > nextAnniversary) {
+      nextAnniversary.setFullYear(today.getFullYear() + 1);
+    }
+
+    // Calculate precise time difference in milliseconds
+    const timeDifference = nextAnniversary.getTime() - today.getTime();
+
+    if (timeDifference > 0) {
+      // Convert milliseconds to days, hours, minutes
+      const totalSeconds = Math.floor(timeDifference / 1000);
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      const totalHours = Math.floor(totalMinutes / 60);
+
+      const daysRemaining = Math.floor(totalHours / 24);
+      const hoursRemaining = totalHours % 24;
+      const minutesRemaining = totalMinutes % 60;
+
+      setDays(daysRemaining);
+      setHours(hoursRemaining);
+      setMinutes(minutesRemaining);
+    } else {
+      setDays(0);
+      setHours(0);
+      setMinutes(0);
+    }
+
+    // Calculate years since anniversary
+    let yearsSince = today.getFullYear() - anniversaryDate.getFullYear();
+
+    // Adjust if this year's anniversary hasn't happened yet
+    if (
+      today.getMonth() < anniversaryDate.getMonth() ||
+      (today.getMonth() === anniversaryDate.getMonth() &&
+        today.getDate() < anniversaryDate.getDate())
+    ) {
+      yearsSince -= 1;
+    }
+
+    setYears(yearsSince);
+  };
+
+  // Replace the useEffect with the updated one that uses the date from Firebase
   useEffect(() => {
-    const calculateTimeRemaining = () => {
-      const today = new Date();
-      let nextAnniversary = new Date(ANNIVERSARY_DATE);
-      nextAnniversary.setFullYear(today.getFullYear());
+    // Use date from Firebase or fallback to a default date
+    const anniversaryDateString = userData.date || "2023-06-15"; // Fallback to hardcoded date if not set
 
-      if (today > nextAnniversary) {
-        nextAnniversary.setFullYear(today.getFullYear() + 1);
-      }
+    recalculateCountdown(anniversaryDateString);
 
-      const timeDifference = nextAnniversary.getTime() - today.getTime();
+    const intervalId = setInterval(() => {
+      recalculateCountdown(anniversaryDateString);
+    }, 60000);
 
-      if (timeDifference > 0) {
-        const daysRemaining = Math.floor(
-          timeDifference / (1000 * 60 * 60 * 24)
-        );
-        const hoursRemaining = Math.floor(
-          (timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-        const minutesRemaining = Math.floor(
-          (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
-        );
-
-        setDays(daysRemaining);
-        setHours(hoursRemaining);
-        setMinutes(minutesRemaining);
-      } else {
-        setDays(0);
-        setHours(0);
-        setMinutes(0);
-      }
-    };
-
-    calculateTimeRemaining();
-    const intervalId = setInterval(calculateTimeRemaining, 60000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [userData.date]); // Add date as dependency so calculation updates when date changes
 
   // Add useEffect for handling back button press
   useEffect(() => {
@@ -166,7 +210,7 @@ export default function SettingsScreen() {
             </View>
           </View>
           <Text style={styles.anniversaryTitle}>
-            You and {partner_name || 'Partner'} 8th Anniversary
+            You and {partner_name || 'Partner'}'s {getOrdinalNum(years)} Anniversary
           </Text>
 
           <View style={styles.celebrationIcon}>

@@ -185,67 +185,91 @@ export default function HomeScreen() {
     );
   };
 
+  // Add a function to recalculate countdown when date is changed in settings
+  const recalculateCountdown = (newDate: string) => {
+    const today = new Date();
+    const anniversaryDate = new Date(newDate);
+
+    // Create next anniversary date with the same month and day in current/next year
+    let nextAnniversary = new Date(today.getFullYear(),
+                                  anniversaryDate.getMonth(),
+                                  anniversaryDate.getDate(),
+                                  0, 0, 0, 0);
+
+    // If the anniversary has already passed this year, set it to next year
+    if (today > nextAnniversary) {
+      nextAnniversary.setFullYear(today.getFullYear() + 1);
+    }
+
+    // Calculate precise time difference in milliseconds
+    const timeDifference = nextAnniversary.getTime() - today.getTime();
+
+    if (timeDifference > 0) {
+      // Convert milliseconds to days, hours, minutes
+      const totalSeconds = Math.floor(timeDifference / 1000);
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      const totalHours = Math.floor(totalMinutes / 60);
+
+      const daysRemaining = Math.floor(totalHours / 24);
+      const hoursRemaining = totalHours % 24;
+      const minutesRemaining = totalMinutes % 60;
+
+      setDays(daysRemaining);
+      setHours(hoursRemaining);
+      setMinutes(minutesRemaining);
+    } else {
+      setDays(0);
+      setHours(0);
+      setMinutes(0);
+    }
+
+    // Calculate years since anniversary
+    let yearsSince = today.getFullYear() - anniversaryDate.getFullYear();
+
+    // Adjust if this year's anniversary hasn't happened yet
+    if (
+      today.getMonth() < anniversaryDate.getMonth() ||
+      (today.getMonth() === anniversaryDate.getMonth() &&
+        today.getDate() < anniversaryDate.getDate())
+    ) {
+      yearsSince -= 1;
+    }
+
+    setYears(yearsSince);
+  };
+
+  // Update the onDateChange function to recalculate countdown immediately
+  const onDateChange = (year: number, month: number, day: number) => {
+    const selectedDate = new Date(year, month, day);
+    const formattedDate = selectedDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+    setEditedUserData(prev => ({
+      ...prev,
+      date: formattedDate
+    }));
+
+    // Immediately recalculate countdown with the new date
+    recalculateCountdown(formattedDate);
+
+    setShowDatePicker(false);
+  };
+
+  // Update the useEffect that calculates time remaining to use our shared function
   useEffect(() => {
-    const calculateTimeRemaining = () => {
-      // Use date from Firebase or fallback to today's date if not available
-      const anniversaryDateString = date || "2023-06-15"; // Fallback to hardcoded date if not set
-      const ANNIVERSARY_DATE = new Date(anniversaryDateString);
+    // If profile modal is open, use the edited date for preview
+    // Otherwise use the date from Firebase
+    const dateToUse = showProfileModal && editedUserData.date
+      ? editedUserData.date
+      : (date || "2023-06-15"); // Fallback to hardcoded date if not set
 
-      const today = new Date();
+    recalculateCountdown(dateToUse);
 
-      // Create next anniversary date with the same month and day in current/next year
-      let nextAnniversary = new Date(today.getFullYear(),
-                                    ANNIVERSARY_DATE.getMonth(),
-                                    ANNIVERSARY_DATE.getDate(),
-                                    0, 0, 0, 0); // Set to midnight for precise calculations
+    const intervalId = setInterval(() => {
+      recalculateCountdown(dateToUse);
+    }, 60000);
 
-      // If the anniversary has already passed this year, set it to next year
-      if (today > nextAnniversary) {
-        nextAnniversary.setFullYear(today.getFullYear() + 1);
-      }
-
-      // Calculate precise time difference in milliseconds
-      const timeDifference = nextAnniversary.getTime() - today.getTime();
-
-      if (timeDifference > 0) {
-        // Convert milliseconds to days, hours, minutes
-        const totalSeconds = Math.floor(timeDifference / 1000);
-        const totalMinutes = Math.floor(totalSeconds / 60);
-        const totalHours = Math.floor(totalMinutes / 60);
-
-        const daysRemaining = Math.floor(totalHours / 24);
-        const hoursRemaining = totalHours % 24; // This gives hours remaining after removing full days
-        const minutesRemaining = totalMinutes % 60; // This gives minutes remaining after removing full hours
-
-        setDays(daysRemaining);
-        setHours(hoursRemaining);
-        setMinutes(minutesRemaining);
-      } else {
-        setDays(0);
-        setHours(0);
-        setMinutes(0);
-      }
-
-      // Calculate years since anniversary
-      let yearsSince = today.getFullYear() - ANNIVERSARY_DATE.getFullYear();
-
-      // Adjust if this year's anniversary hasn't happened yet
-      if (
-        today.getMonth() < ANNIVERSARY_DATE.getMonth() ||
-        (today.getMonth() === ANNIVERSARY_DATE.getMonth() &&
-          today.getDate() < ANNIVERSARY_DATE.getDate())
-      ) {
-        yearsSince -= 1;
-      }
-
-      setYears(yearsSince);
-    };
-
-    calculateTimeRemaining();
-    // Recalculate every minute to keep the countdown accurate
-    const intervalId = setInterval(calculateTimeRemaining, 60000);
     return () => clearInterval(intervalId);
-  }, [date]); // Add date as dependency so calculation updates when date changes
+  }, [date, showProfileModal, editedUserData.date]); // Add dependencies for modal state and edited date
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -390,17 +414,6 @@ export default function HomeScreen() {
   };
 
   // Date picker handlers
-  const onDateChange = (year: number, month: number, day: number) => {
-    const dateObj = new Date(year, month, day);
-
-    // Format the date as YYYY-MM-DD for storing
-    const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    setEditedUserData({...editedUserData, date: formattedDate});
-
-    // Close the date picker
-    setShowDatePicker(false);
-  };
-
   const showDatePickerModal = () => {
     // If there's already a date, parse it to initialize the picker
     if (editedUserData.date) {
@@ -1026,6 +1039,28 @@ export default function HomeScreen() {
                     />
                   </TouchableOpacity>
                 </View>
+              </View>
+
+              {/* Anniversary Countdown Display */}
+              <View style={styles.countdownContainer}>
+                <Text style={styles.countdownTitle}>Time Until Next Anniversary:</Text>
+                <View style={styles.countdownRow}>
+                  <View style={styles.countdownItem}>
+                    <Text style={styles.countdownValue}>{days}</Text>
+                    <Text style={styles.countdownLabel}>Days</Text>
+                  </View>
+                  <View style={styles.countdownItem}>
+                    <Text style={styles.countdownValue}>{hours}</Text>
+                    <Text style={styles.countdownLabel}>Hours</Text>
+                  </View>
+                  <View style={styles.countdownItem}>
+                    <Text style={styles.countdownValue}>{minutes}</Text>
+                    <Text style={styles.countdownLabel}>Mins</Text>
+                  </View>
+                </View>
+                <Text style={styles.anniversaryNote}>
+                  You've been together for {getOrdinalNum(years)} year{years !== 1 ? 's' : ''}
+                </Text>
               </View>
 
               {/* Partner's Name */}
@@ -1857,5 +1892,44 @@ const styles = StyleSheet.create({
   animatedItemContainer: {
     position: 'absolute',
     zIndex: 2, // Keep this below the text but visible
+  },
+  countdownContainer: {
+    backgroundColor: '#333',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  countdownTitle: {
+    color: '#FFAA2C',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  countdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  countdownItem: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  countdownValue: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  countdownLabel: {
+    color: '#CCCCCC',
+    fontSize: 14,
+  },
+  anniversaryNote: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
