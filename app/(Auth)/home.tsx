@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getUserData } from "../firebase";
 import { Card, useAppStore } from "./store";
 
 const { width, height } = Dimensions.get("window");
@@ -31,6 +32,40 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const { cards, currentContent, setCurrentContent } = useAppStore();
+
+  const UserProfile = ({ userId }) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [username, setUsername] = useState("");
+    const [age, setAge] = useState(null);
+    const [date, setDate] = useState(null);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+      // Function to fetch user data
+      const fetchUserData = async () => {
+        try {
+          setIsLoading(true);
+          const user = await getUserData(userId);
+
+          if (user) {
+            // Set state with user data
+            setUsername(user.getUsername());
+            setAge(user.getAge());
+            setDate(user.getDate());
+          } else {
+            setError("User not found");
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+          setError("Failed to load user data");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchUserData();
+    }, [userId]);
+  };
 
   useEffect(() => {
     const calculateTimeRemaining = () => {

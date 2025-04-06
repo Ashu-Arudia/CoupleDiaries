@@ -1,9 +1,8 @@
-import firestore from "@react-native-firebase/firestore";
-// import { initializeApp } from "firebase/app";
 import auth from "@react-native-firebase/auth";
-// ... import other web SDK modules if needed
+import firestore from "@react-native-firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
 
-// Your Firebase project configuration (get this from the Firebase console)
 const firebaseConfig = {
   apiKey: "AIzaSyDoYzKQBmFPZxNB1M19WmjQSltephXXzZY",
   authDomain: "couplediaries.firebaseapp.com",
@@ -42,6 +41,39 @@ export async function setDetails(
     console.error("Error setting name and age:", error.message);
     // Don't throw the error, just return false
     return false;
+  }
+}
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export async function getUserData(userId: any) {
+  try {
+    // Get the user document
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+
+      // Return an object with methods to access specific user data fields
+      return {
+        // Method to get all user data
+        getAllData: () => userData,
+
+        // Methods to get specific fields
+        getUsername: () => userData.name || null,
+        getAge: () => userData.age || null,
+        getDate: () =>
+          userData.date || userData.createdAt || userData.joinDate || null,
+      };
+    } else {
+      console.log("No such user!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    throw error;
   }
 }
 
