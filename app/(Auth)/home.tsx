@@ -532,7 +532,7 @@ export default function HomeScreen() {
                 </View>
               </View>
               <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative', overflow: 'visible' }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+                <View style={{ paddingLeft: 15, flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
                   <Text
                     style={[
                       styles.cardTitle,
@@ -1528,7 +1528,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   boxImg: {
-    justifyContent: 'center',
+    // justifyContent: 'center',
     alignItems: 'center',
     width: 90,
     height: 90,
