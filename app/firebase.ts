@@ -13,23 +13,28 @@ const firebaseConfig = {
   appId: "1:507930487102:web:3b4928fa4fde02cf43246f",
 };
 
-export async function setUserNameAndAge(
+export async function setDetails(
   uid: string,
   name: string,
-  age: number
+  age: number,
+  partner_name: string,
+  partner_email: string,
+  date: string,
+  selectedGender: any
 ) {
   try {
     const userData = {
       name: name,
       age: age,
+      partner_name: partner_name,
+      partner_email: partner_email,
+      date: date,
+      selectedGender: selectedGender,
       updatedAt: new Date().toISOString(),
     };
 
     // Using a simpler approach for Firestore
-    await firestore()
-      .collection('users')
-      .doc(uid)
-      .set(userData);
+    await firestore().collection("users").doc(uid).set(userData);
 
     console.log("User data saved successfully to Firestore for UID:", uid);
     return true;

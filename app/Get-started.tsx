@@ -9,10 +9,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import * as Progress from "react-native-progress";
-import { auth, setUserNameAndAge } from './firebase';
+import { auth, setDetails } from "./firebase";
 const { width, height } = Dimensions.get("window");
 
 export default function App() {
@@ -45,14 +45,22 @@ export default function App() {
 
   const handleNext = async () => {
     if (!validateStep()) return;
-    if (currentStep == 1)
-    {
-      // Save user data to Firebase
+    if (currentStep == 1) {
+      setCurrentStep(currentStep + 1);
+    } else if (currentStep == 2) {
       setLoading(true);
       try {
         const user = auth().currentUser;
         if (user) {
-          const success = await setUserNameAndAge(user.uid, name, parseInt(age) || 0);
+          const success = await setDetails(
+            user.uid,
+            name,
+            parseInt(age) || 0,
+            partner_name,
+            partner_email,
+            date,
+            selectedGender
+          );
           if (success) {
             console.log("User data saved successfully");
             setCurrentStep(currentStep + 1);
@@ -69,12 +77,7 @@ export default function App() {
       } finally {
         setLoading(false);
       }
-    }
-    else if (currentStep == 2)
-    {
-      setCurrentStep(currentStep + 1);
-    }
-    else {
+    } else {
       router.replace("/(Auth)/home");
     }
   };
@@ -203,14 +206,11 @@ export default function App() {
   const renderButtons = () => (
     <View style={styles.buttonContainer}>
       <TouchableOpacity
-        style={[
-          styles.nextButton,
-          loading && { opacity: 0.7 }
-        ]}
+        style={[styles.nextButton, loading && { opacity: 0.7 }]}
         onPress={handleNext}
         disabled={loading}
       >
-         <Text style={styles.buttonText}>{next_btn}</Text>
+        <Text style={styles.buttonText}>{next_btn}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -220,7 +220,7 @@ export default function App() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {currentStep!==3 && (
+      {currentStep !== 3 && (
         <Progress.Bar
           progress={progress}
           width={width * 0.8}
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     height: height,
-    width:width,
+    width: width,
   },
   header: {
     flexDirection: "row",
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     // position: "relative",
-    width: width*0.8,
+    width: width * 0.8,
     marginBottom: 10,
   },
   inputWithIcon: {
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     width: "95%",
-    bottom:20,
+    bottom: 20,
   },
   prevButton: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
