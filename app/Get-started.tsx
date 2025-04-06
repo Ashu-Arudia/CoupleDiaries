@@ -63,9 +63,19 @@ export default function App() {
     const date = new Date(year, month, day);
     setSelectedDate(date);
 
-    // Format the date as a string
-    const formattedDate = `${monthNames[month]} ${day}, ${year}`;
-    setDate(formattedDate);
+    // Create the formatted date display for UI (Month Day, Year format)
+    const displayDate = `${monthNames[month]} ${day}, ${year}`;
+
+    // Create a consistent YYYY-MM-DD format for storage and calculations
+    // Add 1 to month because JavaScript months are 0-indexed (January is 0)
+    const formattedMonth = String(month + 1).padStart(2, '0');
+    const formattedDay = String(day).padStart(2, '0');
+    const standardDateFormat = `${year}-${formattedMonth}-${formattedDay}`;
+
+    console.log('Setting date:', standardDateFormat);
+
+    // Store the standardized format
+    setDate(standardDateFormat);
   };
 
   // For the custom date picker modal
@@ -74,7 +84,18 @@ export default function App() {
   const [pickerDay, setPickerDay] = useState(1);
 
   const confirmDate = () => {
-    onDateChange(pickerYear, pickerMonth, pickerDay);
+    // When confirming from the picker, use the consistent approach
+    // Add 1 to month because JavaScript months are 0-indexed (January is 0)
+    const formattedMonth = String(pickerMonth + 1).padStart(2, '0');
+    const formattedDay = String(pickerDay).padStart(2, '0');
+    const standardDateFormat = `${pickerYear}-${formattedMonth}-${formattedDay}`;
+
+    console.log('Confirming date:', standardDateFormat);
+
+    // Set the selected date object
+    setSelectedDate(new Date(pickerYear, pickerMonth, pickerDay));
+    // Store the standardized format
+    setDate(standardDateFormat);
     setShowDatePicker(false);
   };
 
@@ -159,10 +180,46 @@ export default function App() {
       } finally {
         setLoading(false);
       }
-    } else if (currentStep == 1) {
+    } else if (currentStep === 1) {
       setCurrentStep(currentStep + 1);
-    } else {
-      router.replace("/(Auth)/home");
+    } else if (currentStep === 3) {
+      // Final step - direct navigation to home
+      console.log("Setup completed, navigating to home");
+
+      // First, set a flag to prevent flickering and multiple navigations
+      setLoading(true);
+
+      try {
+        // Use a direct hard navigation to the home screen
+        console.log("Attempting to navigate to /(Auth)/home");
+
+        // Ensure the user data is correctly set in Firestore before navigation
+        const user = auth().currentUser;
+        if (user) {
+          const firestore = require('@react-native-firebase/firestore').default();
+          await firestore.collection('users').doc(user.uid).update({
+            setupCompleted: true,
+            setupCompletedAt: new Date().toISOString()
+          });
+          console.log("Updated user setup completion status");
+
+          // Refresh user data one more time to ensure it's current
+          await refreshUserData();
+        }
+
+        // Try navigation with a small delay to ensure state updates
+        setTimeout(() => {
+          console.log("Executing delayed navigation to home");
+          router.replace("/(Auth)/home");
+        }, 300);
+      } catch (error) {
+        console.error("Navigation error:", error);
+        // If any error occurs, use another approach with a longer delay
+        alert("Completing setup. You'll be redirected to the home screen shortly.");
+        setTimeout(() => {
+          router.replace("/(Auth)/home");
+        }, 1000);
+      }
     }
   };
 

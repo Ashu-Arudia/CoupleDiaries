@@ -47,57 +47,86 @@ export default function SettingsScreen() {
     return n + suffix;
   };
 
-  // Add a function to recalculate countdown when date changes
+  // Fix the recalculateCountdown function to properly handle date string parsing
   const recalculateCountdown = (dateString: string) => {
     const today = new Date();
-    const anniversaryDate = new Date(dateString);
 
-    // Create next anniversary date with the same month and day in current/next year
-    let nextAnniversary = new Date(today.getFullYear(),
-                                anniversaryDate.getMonth(),
-                                anniversaryDate.getDate(),
-                                0, 0, 0, 0);
+    try {
+      // Ensure the date is in a valid format - try different parsing methods
+      let anniversaryDate: Date;
 
-    // If the anniversary has already passed this year, set it to next year
-    if (today > nextAnniversary) {
-      nextAnniversary.setFullYear(today.getFullYear() + 1);
-    }
+      // Check if date string is in standard format YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
+        // Month is 0-indexed in JavaScript Date
+        anniversaryDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      } else {
+        // Fallback to direct parsing which might work for different formats
+        anniversaryDate = new Date(dateString);
+      }
 
-    // Calculate precise time difference in milliseconds
-    const timeDifference = nextAnniversary.getTime() - today.getTime();
+      // Verify the date is valid
+      if (isNaN(anniversaryDate.getTime())) {
+        console.error("Invalid date format:", dateString);
+        // Use a default date for calculation
+        anniversaryDate = new Date("2023-06-15");
+      }
 
-    if (timeDifference > 0) {
-      // Convert milliseconds to days, hours, minutes
-      const totalSeconds = Math.floor(timeDifference / 1000);
-      const totalMinutes = Math.floor(totalSeconds / 60);
-      const totalHours = Math.floor(totalMinutes / 60);
+      console.log("Settings page - Anniversary date used for calculation:", anniversaryDate.toISOString());
 
-      const daysRemaining = Math.floor(totalHours / 24);
-      const hoursRemaining = totalHours % 24;
-      const minutesRemaining = totalMinutes % 60;
+      // Create next anniversary date with the same month and day in current/next year
+      let nextAnniversary = new Date(today.getFullYear(),
+                                  anniversaryDate.getMonth(),
+                                  anniversaryDate.getDate(),
+                                  0, 0, 0, 0);
 
-      setDays(daysRemaining);
-      setHours(hoursRemaining);
-      setMinutes(minutesRemaining);
-    } else {
+      // If the anniversary has already passed this year, set it to next year
+      if (today > nextAnniversary) {
+        nextAnniversary.setFullYear(today.getFullYear() + 1);
+      }
+
+      // Calculate precise time difference in milliseconds
+      const timeDifference = nextAnniversary.getTime() - today.getTime();
+
+      if (timeDifference > 0) {
+        // Convert milliseconds to days, hours, minutes
+        const totalSeconds = Math.floor(timeDifference / 1000);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        const totalHours = Math.floor(totalMinutes / 60);
+
+        const daysRemaining = Math.floor(totalHours / 24);
+        const hoursRemaining = totalHours % 24;
+        const minutesRemaining = totalMinutes % 60;
+
+        setDays(daysRemaining);
+        setHours(hoursRemaining);
+        setMinutes(minutesRemaining);
+      } else {
+        setDays(0);
+        setHours(0);
+        setMinutes(0);
+      }
+
+      // Calculate years since anniversary
+      let yearsSince = today.getFullYear() - anniversaryDate.getFullYear();
+
+      // Adjust if this year's anniversary hasn't happened yet
+      if (
+        today.getMonth() < anniversaryDate.getMonth() ||
+        (today.getMonth() === anniversaryDate.getMonth() &&
+          today.getDate() < anniversaryDate.getDate())
+      ) {
+        yearsSince -= 1;
+      }
+
+      setYears(yearsSince);
+    } catch (error) {
+      console.error("Error calculating date difference:", error);
       setDays(0);
       setHours(0);
       setMinutes(0);
+      setYears(0);
     }
-
-    // Calculate years since anniversary
-    let yearsSince = today.getFullYear() - anniversaryDate.getFullYear();
-
-    // Adjust if this year's anniversary hasn't happened yet
-    if (
-      today.getMonth() < anniversaryDate.getMonth() ||
-      (today.getMonth() === anniversaryDate.getMonth() &&
-        today.getDate() < anniversaryDate.getDate())
-    ) {
-      yearsSince -= 1;
-    }
-
-    setYears(yearsSince);
   };
 
   // Replace the useEffect with the updated one that uses the date from Firebase

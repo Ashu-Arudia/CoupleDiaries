@@ -61,10 +61,10 @@ export default function App() {
         // Check if email is verified
         await user.reload();
         if (!user.emailVerified) {
-          // Email is verified, proceed to home
+          // Email is NOT verified, go to verification screen
           router.replace("/EmailVerification");
         } else {
-          // Email not verified, go to verification screen
+          // Email is verified, proceed to home
           router.replace("/(Auth)/home");
         }
       }
