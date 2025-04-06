@@ -1,6 +1,9 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -12,7 +15,7 @@ import {
   View,
 } from "react-native";
 import * as Progress from "react-native-progress";
-import { auth, setDetails } from "./firebase";
+import { auth, setDetails, uploadProfileImage } from "./firebase";
 import { useUser } from "./UserContext";
 const { width, height } = Dimensions.get("window");
 
@@ -25,6 +28,8 @@ export default function App() {
   const [partner_email, set_p_email] = useState("");
   const [date, setDate] = useState("");
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const genders = ["Male", "Female", "Other"];
   const [loading, setLoading] = useState(false);
   const [isSignIn, setIsSignIn] = useState(false);
@@ -34,6 +39,29 @@ export default function App() {
 
   let next_btn = "";
   const progress = currentStep / 4;
+
+  // Request permission and pick an image
+  const pickImage = async () => {
+    // Request permission to access the media library
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    // Launch the image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
 
   const validateStep = () => {
     if (currentStep === 1 && name.trim() === "") {
@@ -49,11 +77,21 @@ export default function App() {
 
   const handleNext = async () => {
     if (!validateStep()) return;
-    if (currentStep == 2) {
+
+    if (currentStep === 2) {
       setLoading(true);
       try {
         const user = auth().currentUser;
         if (user) {
+          let profileImageURL;
+
+          // Upload profile image if one was selected
+          if (profileImage) {
+            setUploadingImage(true);
+            profileImageURL = await uploadProfileImage(user.uid, profileImage);
+            setUploadingImage(false);
+          }
+
           const success = await setDetails(
             user.uid,
             name,
@@ -61,8 +99,10 @@ export default function App() {
             partner_name,
             partner_email,
             date,
-            selectedGender
+            selectedGender,
+            profileImageURL || undefined
           );
+
           if (success) {
             console.log("User data saved successfully");
             // Refresh the user data in the context
@@ -101,10 +141,31 @@ export default function App() {
         return (
           <View>
             <Text style={styles.label}>Let's Get to Know You!</Text>
-            <Image
-              source={require("../assets/images/ppic2.jpg")}
-              style={styles.imagepic}
-            />
+            <View style={styles.imagePickerContainer}>
+              {profileImage ? (
+                <View style={styles.placeholderContainer}>
+                  <Image source={{ uri: profileImage }} style={styles.imagepic} />
+                  <TouchableOpacity onPress={pickImage} style={styles.cameraIconContainer}>
+                    <MaterialIcons name="add-a-photo" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <Image
+                    source={require("../assets/images/ppic2.jpg")}
+                    style={styles.imagepic}
+                  />
+                  <TouchableOpacity onPress={pickImage} style={styles.cameraIconContainer}>
+                    <MaterialIcons name="add-a-photo" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              {uploadingImage && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator size="large" color="#FFAA2C" />
+                </View>
+              )}
+            </View>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -273,10 +334,10 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.3)", // Change text color when selected
   },
   imagepic: {
-    resizeMode: "contain",
-    borderRadius: 70,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     alignSelf: "center",
-    marginVertical: 20,
   },
   img: {
     justifyContent: "center",
@@ -453,5 +514,34 @@ const styles = StyleSheet.create({
     width: width * 0.4,
     height: 100,
     marginBottom: 30,
+  },
+  imagePickerContainer: {
+    alignSelf: 'center',
+    marginVertical: 20,
+    position: 'relative',
+    width: 150,
+    height: 150,
+  },
+  placeholderContainer: {
+    position: 'relative',
+    width: 150,
+    height: 150,
+  },
+  cameraIconContainer: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFAA2C',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 75,
   },
 });

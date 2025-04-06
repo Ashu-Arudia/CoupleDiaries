@@ -1,5 +1,6 @@
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+import storage from "@react-native-firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDoYzKQBmFPZxNB1M19WmjQSltephXXzZY",
@@ -44,10 +45,20 @@ export async function setDetails(
   partner_name: string,
   partner_email: string,
   date: string,
-  selectedGender: any
+  selectedGender: any,
+  profileImageURL?: string
 ) {
   try {
-    const userData = {
+    const userData: {
+      name: string;
+      age: number;
+      partner_name: string;
+      partner_email: string;
+      date: string;
+      selectedGender: any;
+      updatedAt: string;
+      profileImageURL?: string;
+    } = {
       name: name,
       age: age,
       partner_name: partner_name,
@@ -56,6 +67,11 @@ export async function setDetails(
       selectedGender: selectedGender,
       updatedAt: new Date().toISOString(),
     };
+
+    // Add profile image URL if provided
+    if (profileImageURL) {
+      userData.profileImageURL = profileImageURL;
+    }
 
     // Using a simpler approach for Firestore
     await firestore().collection("users").doc(uid).set(userData);
@@ -90,7 +106,8 @@ export async function getUserData(userId: string) {
         getAge: () => userData?.age || null,
         getDate: () => userData?.date || userData?.createdAt || userData?.joinDate || null,
         getPartner_name: () => userData?.partner_name || null,
-        getPartner_email: () => userData?.partner_email || null
+        getPartner_email: () => userData?.partner_email || null,
+        getProfileImageURL: () => userData?.profileImageURL || null
       };
     } else {
       console.log("No such user!");
@@ -102,5 +119,34 @@ export async function getUserData(userId: string) {
   }
 }
 
+export async function uploadProfileImage(
+  uid: string,
+  uri: string
+): Promise<string | null> {
+  try {
+    // Create a reference to the file in Firebase Storage
+    const filename = `profile_images/${uid}/${Date.now()}.jpg`;
+    const storageRef = storage().ref(filename);
+
+    // Upload the file
+    await storageRef.putFile(uri);
+
+    // Get the download URL
+    const downloadURL = await storageRef.getDownloadURL();
+
+    // Update the user document with the profile image URL
+    await firestore().collection('users').doc(uid).update({
+      profileImageURL: downloadURL,
+      updatedAt: new Date().toISOString(),
+    });
+
+    console.log("Profile image uploaded successfully:", downloadURL);
+    return downloadURL;
+  } catch (error: any) {
+    console.error("Error uploading profile image:", error.message);
+    return null;
+  }
+}
+
 // Export the auth instance and other services
-export { auth, firestore };
+export { auth, firestore, storage };

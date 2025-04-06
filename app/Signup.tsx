@@ -3,16 +3,16 @@ import { useRouter } from "expo-router";
 import { FirebaseError } from "firebase/app";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 const { width, height } = Dimensions.get("window");
 
@@ -22,17 +22,9 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cnfPassword, setcnfPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [bio, setBio] = useState("");
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [partner_name, set_p_name] = useState("");
-  const [partner_email, set_p_email] = useState("");
-  const [date, setDate] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showCnfPassword, setShowCnfPassword] = useState(false);
-  const [selectedGender, setSelectedGender] = useState<string | null>(null);
-  const genders = ["Male", "Female", "Other"];
   const [loading, setLoading] = useState(false);
   const [isSignIn, setIsSignIn] = useState(false);
 
@@ -96,18 +88,6 @@ export default function App() {
         alert("Passwords do not match!");
         return false;
       }
-    }
-    if (currentStep === 2 && otp.trim() === "") {
-      alert("OTP cannot be empty!");
-      return false;
-    }
-    if (currentStep === 3 && name.trim() === "") {
-      alert("All details are required!");
-      return false;
-    }
-    if (currentStep === 4 && partner_name.trim() === "") {
-      alert("All details are required!");
-      return false;
     }
     return true;
   };
