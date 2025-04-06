@@ -1,8 +1,9 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
-import { useRouter } from "expo-router";
+import { router as globalRouter, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  BackHandler,
   Dimensions,
   Image,
   ScrollView,
@@ -69,6 +70,22 @@ export default function SettingsScreen() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Add useEffect for handling back button press
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        // If user is in the process of signing out, prevent going back
+        if (auth().currentUser === null) {
+          return true; // Prevent default behavior
+        }
+        return false; // Allow default back behavior if user is signed in
+      }
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
   const handleBackToHome = () => {
     setCurrentContent("default");
     router.replace("/home");
@@ -76,10 +93,33 @@ export default function SettingsScreen() {
 
   const handleSignOut = async () => {
     try {
+      // First update any user metadata to indicate logout if needed
+      const user = auth().currentUser;
+      if (user) {
+        // Optional: Update a "isLoggedIn" field in the user's document
+        // This assumes you have a "users" collection in Firestore
+        // If you're not using Firestore, adjust accordingly
+        try {
+          const firestore = require('@react-native-firebase/firestore').default();
+          await firestore.collection('users').doc(user.uid).update({
+            isLoggedIn: false,
+            lastLogoutTime: new Date().toISOString()
+          });
+        } catch (firestoreError) {
+          console.error("Error updating login status:", firestoreError);
+          // Continue with signout even if this fails
+        }
+      }
+
+      // Now sign out from Firebase Auth
       await auth().signOut();
-      router.replace("/");
+
+      // Use the global router to ensure navigation context is maintained
+      globalRouter.replace("/");
+
     } catch (error) {
       console.error("Error signing out:", error);
+      alert("Failed to sign out. Please try again.");
     }
   };
 
