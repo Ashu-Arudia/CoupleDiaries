@@ -6,6 +6,7 @@ import {
   Dimensions,
   Image,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -155,9 +156,41 @@ export default function SettingsScreen() {
         {/* Partner Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PARTNER</Text>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+          >
             <MaterialIcons name="person-add" size={24} color="#888" />
             <Text style={styles.settingText}>Add Partner</Text>
+            <TouchableOpacity
+              style={styles.shareButton}
+              onPress={async () => {
+                try {
+                  // Show options for adding partner
+                  const appLink = "https://couplediaries.app/download"; // Replace with your actual app link
+                  const message = `Hey! Download Couple Diaries app so we can share our memories together: ${appLink}`;
+
+                  const result = await Share.share({
+                    message: message,
+                    title: "Join me on Couple Diaries"
+                  });
+
+                  if (result.action === Share.sharedAction) {
+                    if (result.activityType) {
+                      console.log("Shared with activity type:", result.activityType);
+                    } else {
+                      console.log("Shared successfully");
+                    }
+                  } else if (result.action === Share.dismissedAction) {
+                    console.log("Share was dismissed");
+                  }
+                } catch (error) {
+                  console.error("Error sharing:", error);
+                  alert("Could not share. Please try again.");
+                }
+              }}
+            >
+              <MaterialIcons name="share" size={20} color="#FFAA2C" />
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
@@ -341,5 +374,13 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  shareIcon: {
+    marginLeft: 'auto',
+    marginRight: 5,
+  },
+  shareButton: {
+    padding: 8,
+    marginLeft: 'auto',
   },
 });

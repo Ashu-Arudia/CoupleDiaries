@@ -9,6 +9,7 @@ import {
   Image,
   Keyboard,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -298,23 +299,56 @@ export default function HomeScreen() {
                 <Text style={styles.partnerInviteText}>
                   Send an invitation email to let your partner download the app and connect with you.
                 </Text>
-                <TouchableOpacity
-                  style={styles.sendMailButton}
-                  onPress={() => {
-                    // Logic to send installation mail to partner email would go here
-                    if (partner_email) {
-                      console.log("Sending invitation to:", partner_email);
-                      // Here you would implement the actual email sending functionality
-                      alert(`Invitation email sent to ${partner_email}`);
-                    } else {
-                      alert("Please add your partner's email in settings first");
-                      handleNavigation("/settings");
-                    }
-                  }}
-                >
-                  <MaterialIcons name="email" size={24} color="#FFFFFF" />
-                  <Text style={styles.sendMailButtonText}>Send Invitation</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.sendMailButton}
+                    onPress={() => {
+                      // Logic to send installation mail to partner email would go here
+                      if (partner_email) {
+                        console.log("Sending invitation to:", partner_email);
+                        // Here you would implement the actual email sending functionality
+                        alert(`Invitation email sent to ${partner_email}`);
+                      } else {
+                        alert("Please add your partner's email in settings first");
+                        handleNavigation("/settings");
+                      }
+                    }}
+                  >
+                    <MaterialIcons name="email" size={24} color="#FFFFFF" />
+                    <Text style={styles.sendMailButtonText}>Email</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.sendMailButton, styles.whatsappButton]}
+                    onPress={async () => {
+                      try {
+                        const appLink = "https://couplediaries.app/download"; // Replace with your actual app link
+                        const message = `Hey! Download Couple Diaries app so we can share our memories together: ${appLink}`;
+
+                        const result = await Share.share({
+                          message: message,
+                          title: "Join me on Couple Diaries"
+                        });
+
+                        if (result.action === Share.sharedAction) {
+                          if (result.activityType) {
+                            console.log("Shared with activity type:", result.activityType);
+                          } else {
+                            console.log("Shared successfully");
+                          }
+                        } else if (result.action === Share.dismissedAction) {
+                          console.log("Share was dismissed");
+                        }
+                      } catch (error) {
+                        console.error("Error sharing:", error);
+                        alert("Could not share. Please try again.");
+                      }
+                    }}
+                  >
+                    <MaterialIcons name="share" size={24} color="#FFFFFF" />
+                    <Text style={styles.sendMailButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -942,5 +976,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
     fontSize: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+    gap: 15,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366', // WhatsApp green color
   },
 });
