@@ -294,7 +294,28 @@ export default function HomeScreen() {
               <Text style={styles.cardTitle}>
                 Add your partner to share the Experience
               </Text>
-              <Text style={styles.cardText}></Text>
+              <View style={styles.partnerInviteContainer}>
+                <Text style={styles.partnerInviteText}>
+                  Send an invitation email to let your partner download the app and connect with you.
+                </Text>
+                <TouchableOpacity
+                  style={styles.sendMailButton}
+                  onPress={() => {
+                    // Logic to send installation mail to partner email would go here
+                    if (partner_email) {
+                      console.log("Sending invitation to:", partner_email);
+                      // Here you would implement the actual email sending functionality
+                      alert(`Invitation email sent to ${partner_email}`);
+                    } else {
+                      alert("Please add your partner's email in settings first");
+                      handleNavigation("/settings");
+                    }
+                  }}
+                >
+                  <MaterialIcons name="email" size={24} color="#FFFFFF" />
+                  <Text style={styles.sendMailButtonText}>Send Invitation</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </ScrollView>
         );
@@ -896,5 +917,30 @@ const styles = StyleSheet.create({
   notificationTime: {
     color: '#888888',
     fontSize: 12,
+  },
+  partnerInviteContainer: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  partnerInviteText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  sendMailButton: {
+    flexDirection: 'row',
+    backgroundColor: '#FFAA2C',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendMailButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginLeft: 10,
+    fontSize: 16,
   },
 });
