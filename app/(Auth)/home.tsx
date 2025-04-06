@@ -531,27 +531,28 @@ export default function HomeScreen() {
                   <MaterialIcons name="favorite" size={24} color="#FF4081" style={styles.heartIcon} />
                 </View>
               </View>
-              <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative', overflow: 'hidden' }]}>
-                {/* Remove hearts from here */}
-                <Text
-                  style={[
-                    styles.cardTitle,
-                    {
-                      fontSize: 20,
-                      flexWrap: 'wrap',
-                      width: '90%',
-                      zIndex: 5, // Ensure text is above hearts
-                    },
-                  ]}
-                  numberOfLines={undefined}
-                >
-                  You and {partner_name || 'Partner'}'s {getOrdinalNum(years)} Anniversary
-                </Text>
-                <View style={styles.boxImg}>
-                  <Image
-                    source={require("../../assets/images/Home_page_icons/glass.png")}
-                    style={[styles.image2]}
-                  />
+              <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative', overflow: 'visible' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+                  <Text
+                    style={[
+                      styles.cardTitle,
+                      {
+                        fontSize: 20,
+                        flexWrap: 'wrap',
+                        width: '70%',
+                        zIndex: 5,
+                      },
+                    ]}
+                    numberOfLines={undefined}
+                  >
+                    You and {partner_name || 'Partner'}'s {getOrdinalNum(years)} Anniversary
+                  </Text>
+                  <View style={styles.boxImg}>
+                    <Image
+                      source={require("../../assets/images/Home_page_icons/glass.png")}
+                      style={styles.image2}
+                    />
+                  </View>
                 </View>
               </View>
 
@@ -1522,14 +1523,15 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   image2: {
+    width: 80,
+    height: 80,
     resizeMode: "contain",
-    position: "absolute",
-    width: 100,
   },
   boxImg: {
-    position: "absolute",
-    right: 10,
-    top: -50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 90,
+    height: 90,
   },
   smiley: {
     resizeMode: "contain",
