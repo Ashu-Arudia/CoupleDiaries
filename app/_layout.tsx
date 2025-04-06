@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import { UserProvider } from "./UserContext";
 
 export default function Layout() {
   const [initializing, setinitializing] = useState(true);
@@ -44,11 +45,13 @@ export default function Layout() {
     );
   }
   return (
-    <Stack screenOptions={{ headerShown: false}}>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="Signup" options={{ headerShown: false }} />
-      <Stack.Screen name="Get-started" options={{ headerShown: false }} />
-      <Stack.Screen name="(Auth)" options={{ headerShown: false }} />
-    </Stack>
+    <UserProvider>
+      <Stack screenOptions={{ headerShown: false}}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="Signup" options={{ headerShown: false }} />
+        <Stack.Screen name="Get-started" options={{ headerShown: false }} />
+        <Stack.Screen name="(Auth)" options={{ headerShown: false }} />
+      </Stack>
+    </UserProvider>
   );
 }

@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth, getUserData } from "../firebase";
+import { useUser } from "../UserContext";
 import { Card, useAppStore } from "./store";
 
 const { width, height } = Dimensions.get("window");
@@ -28,107 +28,15 @@ export default function HomeScreen() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [username, setUsername] = useState("");
-  const [age, setAge] = useState(null);
-  const [date, setDate] = useState(null);
-  const [partner_name, setPartner_name] = useState<string>('Partner');
-  const [partner_email, setPartner_email] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  // Use the user context hook instead of local state
+  const { userData } = useUser();
+  const { username, age, date, partner_name, partner_email, isLoading, error } = userData;
 
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const { cards, currentContent, setCurrentContent } = useAppStore();
-
-  // Get the current user's ID and fetch user data
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const user = auth().currentUser;
-      if (user) {
-        setCurrentUserId(user.uid);
-
-        // Now fetch user data
-        try {
-          setIsLoading(true);
-          const userData = await getUserData(user.uid);
-
-          if (userData) {
-            setUsername(userData.getUsername());
-            setAge(userData.getAge());
-            setDate(userData.getDate());
-            setPartner_name(userData.getPartner_name() || 'Partner');
-            setPartner_email(userData.getPartner_email());
-          }
-        } catch (err) {
-          console.error("Error fetching user data:", err);
-          setError("Failed to load user data");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    getCurrentUser();
-  }, []);
-
-  const UserProfile = ({ userId }: { userId: string }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [username, setUsername] = useState("");
-    const [age, setAge] = useState(null);
-    const [date, setDate] = useState(null);
-    const [partnerName, setPartnerName] = useState(null);
-    const [partnerEmail, setPartnerEmail] = useState(null);
-    const [error, setError] = useState("");
-
-    useEffect(() => {
-      // Function to fetch user data
-      const fetchUserData = async () => {
-        if (!userId) {
-          setError("No user ID provided");
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          setIsLoading(true);
-          const user = await getUserData(userId);
-
-          if (user) {
-            // Set state with user data
-            setUsername(user.getUsername());
-            setAge(user.getAge());
-            setDate(user.getDate());
-            setPartnerName(user.getPartner_name());
-            setPartnerEmail(user.getPartner_email());
-          } else {
-            setError("User not found");
-          }
-        } catch (err) {
-          console.error("Error fetching user data:", err);
-          setError("Failed to load user data");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchUserData();
-    }, [userId]);
-
-    // Render the user profile
-    if (isLoading) return <Text style={styles.loadingText}>Loading profile...</Text>;
-    if (error) return <Text style={styles.errorText}>{error}</Text>;
-
-    return (
-      <View style={styles.profileContainer}>
-        <Text style={styles.profileText}>Name: {username || 'Not set'}</Text>
-        <Text style={styles.profileText}>Age: {age || 'Not set'}</Text>
-        {date && <Text style={styles.profileText}>Date: {date}</Text>}
-        <Text style={styles.profileText}>Partner: {partnerName || 'Not set'}</Text>
-      </View>
-    );
-  };
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
