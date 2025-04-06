@@ -7,7 +7,9 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -27,6 +29,8 @@ export default function App() {
   const [partner_name, set_p_name] = useState("");
   const [partner_email, set_p_email] = useState("");
   const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -39,6 +43,40 @@ export default function App() {
 
   let next_btn = "";
   const progress = currentStep / 4;
+
+  // Month names array for our custom date picker
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Generate years for date picker (100 years in the past)
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+
+  // Get days in a month
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  // Date picker handlers
+  const onDateChange = (year: number, month: number, day: number) => {
+    const date = new Date(year, month, day);
+    setSelectedDate(date);
+
+    // Format the date as a string
+    const formattedDate = `${monthNames[month]} ${day}, ${year}`;
+    setDate(formattedDate);
+  };
+
+  // For the custom date picker modal
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth());
+  const [pickerDay, setPickerDay] = useState(1);
+
+  const confirmDate = () => {
+    onDateChange(pickerYear, pickerMonth, pickerDay);
+    setShowDatePicker(false);
+  };
 
   // Request permission and pick an image
   const pickImage = async () => {
@@ -221,7 +259,6 @@ export default function App() {
                   value={partner_name}
                   onChangeText={set_p_name}
                   placeholder="Partner's Name"
-                  multiline
                   placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 />
               </View>
@@ -231,19 +268,147 @@ export default function App() {
                   value={partner_email}
                   onChangeText={set_p_email}
                   placeholder="Partner's Email"
-                  multiline
                   placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 />
               </View>
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={date}
-                  onChangeText={setDate}
-                  placeholder="When did you guys started Dating?"
-                  multiline
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                />
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text
+                    style={[
+                      styles.datePickerButtonText,
+                      date ? styles.datePickerButtonTextSelected : {}
+                    ]}
+                  >
+                    {date || "When did you guys start dating?"}
+                  </Text>
+                  <MaterialIcons name="event" size={24} color="#FFAA2C" />
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={showDatePicker}
+                    onRequestClose={() => setShowDatePicker(false)}
+                  >
+                    <View style={styles.modalView}>
+                      <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Select Anniversary Date</Text>
+
+                        <View style={styles.customPickerContainer}>
+                          {/* Month Selector */}
+                          <View style={styles.pickerSection}>
+                            <Text style={styles.pickerLabel}>Month</Text>
+                            <ScrollView
+                              style={styles.pickerScrollView}
+                              showsVerticalScrollIndicator={false}
+                            >
+                              {monthNames.map((month, index) => (
+                                <TouchableOpacity
+                                  key={`month-${index}`}
+                                  style={[
+                                    styles.pickerItem,
+                                    pickerMonth === index && styles.pickerItemSelected
+                                  ]}
+                                  onPress={() => setPickerMonth(index)}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.pickerItemText,
+                                      pickerMonth === index && styles.pickerItemTextSelected
+                                    ]}
+                                  >
+                                    {month}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+
+                          {/* Day Selector */}
+                          <View style={styles.pickerSection}>
+                            <Text style={styles.pickerLabel}>Day</Text>
+                            <ScrollView
+                              style={styles.pickerScrollView}
+                              showsVerticalScrollIndicator={false}
+                            >
+                              {Array.from(
+                                { length: getDaysInMonth(pickerYear, pickerMonth) },
+                                (_, i) => i + 1
+                              ).map(day => (
+                                <TouchableOpacity
+                                  key={`day-${day}`}
+                                  style={[
+                                    styles.pickerItem,
+                                    pickerDay === day && styles.pickerItemSelected
+                                  ]}
+                                  onPress={() => setPickerDay(day)}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.pickerItemText,
+                                      pickerDay === day && styles.pickerItemTextSelected
+                                    ]}
+                                  >
+                                    {day}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+
+                          {/* Year Selector */}
+                          <View style={styles.pickerSection}>
+                            <Text style={styles.pickerLabel}>Year</Text>
+                            <ScrollView
+                              style={styles.pickerScrollView}
+                              showsVerticalScrollIndicator={false}
+                            >
+                              {years.map(year => (
+                                <TouchableOpacity
+                                  key={`year-${year}`}
+                                  style={[
+                                    styles.pickerItem,
+                                    pickerYear === year && styles.pickerItemSelected
+                                  ]}
+                                  onPress={() => setPickerYear(year)}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.pickerItemText,
+                                      pickerYear === year && styles.pickerItemTextSelected
+                                    ]}
+                                  >
+                                    {year}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+                        </View>
+
+                        <View style={styles.modalButtons}>
+                          <TouchableOpacity
+                            style={[styles.modalButton, styles.cancelButton]}
+                            onPress={() => setShowDatePicker(false)}
+                          >
+                            <Text style={styles.modalButtonText}>Cancel</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={[styles.modalButton, styles.confirmButton]}
+                            onPress={confirmDate}
+                          >
+                            <Text style={styles.modalButtonText}>Confirm</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  </Modal>
+                )}
               </View>
             </View>
           )
@@ -543,5 +708,103 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 75,
+  },
+  datePickerButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 8,
+    padding: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    width: "100%",
+  },
+  datePickerButtonText: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 16,
+  },
+  datePickerButtonTextSelected: {
+    color: "#FFFFFF",
+  },
+  modalView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#222",
+    borderRadius: 10,
+    padding: 20,
+    width: width * 0.9,
+    alignItems: "center",
+  },
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  customPickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    height: 200,
+  },
+  pickerSection: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  pickerLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  pickerScrollView: {
+    maxHeight: 150,
+    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+    borderRadius: 8,
+  },
+  pickerItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+  },
+  pickerItemSelected: {
+    backgroundColor: 'rgba(255, 170, 44, 0.3)',
+  },
+  pickerItemText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  pickerItemTextSelected: {
+    color: '#FFAA2C',
+    fontWeight: 'bold',
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 20,
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    width: "48%",
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#444",
+  },
+  confirmButton: {
+    backgroundColor: "#FFAA2C",
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
