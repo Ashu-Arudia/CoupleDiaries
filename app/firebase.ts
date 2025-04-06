@@ -22,17 +22,21 @@ export async function setUserNameAndAge(
     const userData = {
       name: name,
       age: age,
-      createdAt: firestore.FieldValue.serverTimestamp(), // Optional: track when data was added
+      updatedAt: new Date().toISOString(),
     };
 
+    // Using a simpler approach for Firestore
     await firestore()
-      .collection("users")
+      .collection('users')
       .doc(uid)
-      .set(userData, { merge: true }); // merge: true to avoid overwriting other data
-    console.log("Name and age added to Firestore for UID:", uid);
+      .set(userData);
+
+    console.log("User data saved successfully to Firestore for UID:", uid);
+    return true;
   } catch (error: any) {
     console.error("Error setting name and age:", error.message);
-    throw error;
+    // Don't throw the error, just return false
+    return false;
   }
 }
 
