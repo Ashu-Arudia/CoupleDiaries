@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from "expo-blur";
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -8,6 +9,7 @@ import {
   Dimensions,
   Image,
   Keyboard,
+  Modal,
   ScrollView,
   Share,
   StyleSheet,
@@ -31,10 +33,27 @@ export default function HomeScreen() {
   const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editedUserData, setEditedUserData] = useState({
+    username: '',
+    age: '',
+    date: '',
+    partner_name: '',
+    partner_email: '',
+    profileImageURL: ''
+  });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [editableFields, setEditableFields] = useState({
+    username: false,
+    age: false,
+    date: false,
+    partner_name: false,
+    partner_email: false
+  });
 
   // Use the user context hook instead of local state
-  const { userData } = useUser();
-  const { username, age, date, partner_name, partner_email, isLoading, error } = userData;
+  const { userData, updateUserData } = useUser();
+  const { username, age, date, partner_name, partner_email, profileImageURL, isLoading, error } = userData;
 
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -122,6 +141,22 @@ export default function HomeScreen() {
     };
   }, []);
 
+  // Initialize edited user data when user data changes
+  useEffect(() => {
+    if (userData) {
+      setEditedUserData({
+        username: username || '',
+        age: age ? age.toString() : '',
+        date: date || '',
+        partner_name: partner_name || '',
+        partner_email: partner_email || '',
+        profileImageURL: profileImageURL || ''
+      });
+
+      setProfileImage(profileImageURL || null);
+    }
+  }, [userData]);
+
   const handleSendMessage = () => {
     if (message.trim()) {
       const newMessage = { id: Date.now().toString(), text: message };
@@ -151,6 +186,68 @@ export default function HomeScreen() {
     if (route) {
       router.push(route);
     }
+  };
+
+  const handleProfilePicPress = () => {
+    setShowProfileModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      // Save edited user data to Firestore
+      await updateUserData({
+        username: editedUserData.username,
+        age: editedUserData.age ? parseInt(editedUserData.age, 10) : null,
+        date: editedUserData.date,
+        partner_name: editedUserData.partner_name,
+        partner_email: editedUserData.partner_email,
+        profileImageURL: profileImage || editedUserData.profileImageURL
+      });
+
+      // Close the modal
+      setShowProfileModal(false);
+
+      // Show success message
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      // Request permission to access the image library
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        alert('Permission to access camera roll is required!');
+        return;
+      }
+
+      // Launch the image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        // Set the selected image URI
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      alert('Error selecting image. Please try again.');
+    }
+  };
+
+  const toggleFieldEdit = (field: string) => {
+    setEditableFields({
+      ...editableFields,
+      [field]: !editableFields[field as keyof typeof editableFields]
+    });
   };
 
   const renderContent = () => {
@@ -211,14 +308,13 @@ export default function HomeScreen() {
             {/* {renderUserProfile()} */}
             <View style={[styles.card]}>
               <View style={[styles.container2, styles.box]}>
-                <Image
-                  source={require("../../assets/images/pp2.png")}
-                  style={[styles.image, styles.frontImage]}
-                />
-                <Image
-                  source={require("../../assets/images/pp3.png")}
-                  style={[styles.image, styles.backImage]}
-                />
+                <View style={[styles.profileImageContainer, styles.backImage]}>
+                  <MaterialIcons name="person" size={40} color="#FFFFFF" style={styles.profileIcon} />
+                </View>
+                <View style={[styles.profileImageContainer, styles.frontImage]}>
+                  <MaterialIcons name="person" size={40} color="#FFFFFF" style={styles.profileIcon} />
+                  <MaterialIcons name="favorite" size={24} color="#FF4081" style={styles.heartIcon} />
+                </View>
               </View>
               <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative' }]}>
                 <Text
@@ -407,7 +503,7 @@ export default function HomeScreen() {
                       ]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={[styles.gradient]}
+                      style={styles.gradient}
                     >
                       <Text style={styles.textm}>{card.location}</Text>
                     </LinearGradient>
@@ -490,11 +586,17 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {currentContent === "default" && !showNotifications ? (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.profilePicContainer}>
-            <Image
-              source={require("../../assets/images/pp2.png")}
-              style={styles.profilePic}
-            />
+          <TouchableOpacity style={styles.profilePicContainer} onPress={handleProfilePicPress}>
+            <View style={styles.headerProfileContainer}>
+              {profileImageURL ? (
+                <Image
+                  source={{ uri: profileImageURL }}
+                  style={{ width: 45, height: 45, borderRadius: 22.5 }}
+                />
+              ) : (
+                <MaterialIcons name="person" size={32} color="#FFFFFF" />
+              )}
+            </View>
           </TouchableOpacity>
           <Image
             source={require("../../assets/images/logo.png")}
@@ -578,6 +680,195 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Profile Edit Modal */}
+      <Modal
+        visible={showProfileModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowProfileModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity onPress={() => setShowProfileModal(false)}>
+                <MaterialIcons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView}>
+              {/* Profile Image Picker */}
+              <View style={styles.profileImagePickerContainer}>
+                <TouchableOpacity onPress={handlePickImage} style={styles.profileImagePicker}>
+                  {profileImage ? (
+                    <Image source={{ uri: profileImage }} style={styles.pickedImage} />
+                  ) : (
+                    <View style={styles.profilePlaceholder}>
+                      <MaterialIcons name="person" size={60} color="#FFFFFF" />
+                    </View>
+                  )}
+                  <View style={styles.cameraIconContainer}>
+                    <MaterialIcons name="camera-alt" size={20} color="#FFFFFF" />
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Name */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Your Name</Text>
+                <View style={styles.editFieldContainer}>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { flex: 1 },
+                      editableFields.username ? styles.editableInput : {}
+                    ]}
+                    value={editedUserData.username}
+                    onChangeText={(text) => setEditedUserData({...editedUserData, username: text})}
+                    placeholder="Enter your name"
+                    placeholderTextColor="#666"
+                    editable={editableFields.username}
+                  />
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={() => toggleFieldEdit('username')}
+                  >
+                    <MaterialIcons
+                      name={editableFields.username ? "check" : "edit"}
+                      size={20}
+                      color="#FFAA2C"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Age */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Your Age</Text>
+                <View style={styles.editFieldContainer}>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { flex: 1 },
+                      editableFields.age ? styles.editableInput : {}
+                    ]}
+                    value={editedUserData.age}
+                    onChangeText={(text) => setEditedUserData({...editedUserData, age: text})}
+                    placeholder="Enter your age"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                    editable={editableFields.age}
+                  />
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={() => toggleFieldEdit('age')}
+                  >
+                    <MaterialIcons
+                      name={editableFields.age ? "check" : "edit"}
+                      size={20}
+                      color="#FFAA2C"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Anniversary Date */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Anniversary Date</Text>
+                <View style={styles.editFieldContainer}>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { flex: 1 },
+                      editableFields.date ? styles.editableInput : {}
+                    ]}
+                    value={editedUserData.date}
+                    onChangeText={(text) => setEditedUserData({...editedUserData, date: text})}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#666"
+                    editable={editableFields.date}
+                  />
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={() => toggleFieldEdit('date')}
+                  >
+                    <MaterialIcons
+                      name={editableFields.date ? "check" : "edit"}
+                      size={20}
+                      color="#FFAA2C"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Partner's Name */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Partner's Name</Text>
+                <View style={styles.editFieldContainer}>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { flex: 1 },
+                      editableFields.partner_name ? styles.editableInput : {}
+                    ]}
+                    value={editedUserData.partner_name}
+                    onChangeText={(text) => setEditedUserData({...editedUserData, partner_name: text})}
+                    placeholder="Enter partner's name"
+                    placeholderTextColor="#666"
+                    editable={editableFields.partner_name}
+                  />
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={() => toggleFieldEdit('partner_name')}
+                  >
+                    <MaterialIcons
+                      name={editableFields.partner_name ? "check" : "edit"}
+                      size={20}
+                      color="#FFAA2C"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Partner's Email */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Partner's Email</Text>
+                <View style={styles.editFieldContainer}>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { flex: 1 },
+                      editableFields.partner_email ? styles.editableInput : {}
+                    ]}
+                    value={editedUserData.partner_email}
+                    onChangeText={(text) => setEditedUserData({...editedUserData, partner_email: text})}
+                    placeholder="Enter partner's email"
+                    placeholderTextColor="#666"
+                    keyboardType="email-address"
+                    editable={editableFields.partner_email}
+                  />
+                  <TouchableOpacity
+                    style={styles.editIconContainer}
+                    onPress={() => toggleFieldEdit('partner_email')}
+                  >
+                    <MaterialIcons
+                      name={editableFields.partner_email ? "check" : "edit"}
+                      size={20}
+                      color="#FFAA2C"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Save Button */}
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -691,10 +982,15 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
   },
-  profilePic: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 20,
+  headerProfileContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: "#333333",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FFAA2C",
   },
   container2: {
     flexDirection: "row",
@@ -718,7 +1014,7 @@ const styles = StyleSheet.create({
   },
   backImage: {
     position: "absolute",
-    left: 50,
+    left: 40,
     zIndex: 1,
   },
   frontImage: {
@@ -985,5 +1281,141 @@ const styles = StyleSheet.create({
   },
   whatsappButton: {
     backgroundColor: '#25D366', // WhatsApp green color
+  },
+  profileImageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#333333",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
+  },
+  profileIcon: {
+    marginBottom: -3,
+  },
+  heartIcon: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: "#222",
+    borderRadius: 12,
+    padding: 2,
+    zIndex: 2,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#222',
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalScrollView: {
+    padding: 15,
+  },
+  profileImagePickerContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImagePicker: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  profilePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  cameraIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#FFAA2C',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#222',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    color: '#FFFFFF',
+    marginBottom: 5,
+    fontSize: 14,
+  },
+  modalInput: {
+    backgroundColor: '#333',
+    color: '#FFFFFF',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  editableInput: {
+    backgroundColor: '#444',
+    borderWidth: 1,
+    borderColor: '#FFAA2C',
+  },
+  editFieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editIconContainer: {
+    padding: 10,
+    marginLeft: 5,
+    backgroundColor: '#333',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#FFAA2C',
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  saveButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

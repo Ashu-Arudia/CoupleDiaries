@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, getUserData } from './firebase';
+import { auth, getUserData, updateUserProfile } from './firebase';
 
 // Define the shape of our user data
 type UserData = {
@@ -9,6 +9,7 @@ type UserData = {
   partner_name: string | null;
   partner_email: string | null;
   date: string | null;
+  profileImageURL: string | null;
   isLoading: boolean;
   error: string | null;
 };
@@ -17,6 +18,7 @@ type UserData = {
 const UserContext = createContext<{
   userData: UserData;
   refreshUserData: () => Promise<void>;
+  updateUserData: (data: Partial<UserData>) => Promise<void>;
 }>({
   userData: {
     uid: null,
@@ -25,10 +27,12 @@ const UserContext = createContext<{
     partner_name: null,
     partner_email: null,
     date: null,
+    profileImageURL: null,
     isLoading: true,
     error: null,
   },
   refreshUserData: async () => {},
+  updateUserData: async () => {},
 });
 
 // Provider component
@@ -40,6 +44,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     partner_name: null,
     partner_email: null,
     date: null,
+    profileImageURL: null,
     isLoading: true,
     error: null,
   });
@@ -68,6 +73,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           partner_name: userDoc.getPartner_name() || 'Partner',
           partner_email: userDoc.getPartner_email(),
           date: userDoc.getDate(),
+          profileImageURL: userDoc.getProfileImageURL() || null,
           isLoading: false,
           error: null,
         });
@@ -102,6 +108,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           partner_name: null,
           partner_email: null,
           date: null,
+          profileImageURL: null,
           isLoading: false,
           error: null,
         });
@@ -116,8 +123,27 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     await fetchUserData();
   };
 
+  // Function to update user data in Firestore
+  const updateUserData = async (data: Partial<UserData>) => {
+    try {
+      const user = auth().currentUser;
+      if (!user) {
+        throw new Error('No user is signed in');
+      }
+
+      // Update the user profile in Firestore
+      await updateUserProfile(user.uid, data);
+
+      // Refresh the user data to reflect changes
+      await refreshUserData();
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ userData, refreshUserData }}>
+    <UserContext.Provider value={{ userData, refreshUserData, updateUserData }}>
       {children}
     </UserContext.Provider>
   );

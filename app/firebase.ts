@@ -148,5 +148,43 @@ export async function uploadProfileImage(
   }
 }
 
+export async function updateUserProfile(
+  uid: string,
+  userData: Partial<any>
+): Promise<boolean> {
+  try {
+    // Prepare data for update by removing any null/undefined fields and uid
+    const updateData: Record<string, any> = {};
+    Object.keys(userData).forEach(key => {
+      if (userData[key] !== null && userData[key] !== undefined && key !== 'uid' && key !== 'isLoading' && key !== 'error') {
+        updateData[key] = userData[key];
+      }
+    });
+
+    // Add timestamp
+    updateData.updatedAt = new Date().toISOString();
+
+    // Check if profile image URL is provided as a file URI (from image picker)
+    if (updateData.profileImageURL && updateData.profileImageURL.startsWith('file://')) {
+      const imageUrl = await uploadProfileImage(uid, updateData.profileImageURL);
+      if (imageUrl) {
+        updateData.profileImageURL = imageUrl;
+      } else {
+        // If image upload failed, remove the profileImageURL from the update
+        delete updateData.profileImageURL;
+      }
+    }
+
+    // Update the user document
+    await firestore().collection('users').doc(uid).update(updateData);
+
+    console.log("User profile updated successfully");
+    return true;
+  } catch (error: any) {
+    console.error("Error updating user profile:", error.message);
+    return false;
+  }
+}
+
 // Export the auth instance and other services
 export { auth, firestore, storage };

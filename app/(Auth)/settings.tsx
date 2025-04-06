@@ -157,14 +157,13 @@ export default function SettingsScreen() {
         {/* Anniversary Card */}
         <View style={styles.anniversaryCard}>
           <View style={styles.profileImages}>
-            <Image
-              source={require("../../assets/images/pp2.png")}
-              style={styles.profileImage}
-            />
-            <Image
-              source={require("../../assets/images/pp2.png")}
-              style={[styles.profileImage, styles.secondProfileImage]}
-            />
+            <View style={styles.profileImageContainer}>
+              <MaterialIcons name="person" size={30} color="#FFFFFF" style={styles.profileIcon} />
+            </View>
+            <View style={[styles.profileImageContainer, styles.secondProfileImage]}>
+              <MaterialIcons name="favorite" size={20} color="#FF4081" style={styles.heartIcon} />
+              <MaterialIcons name="person" size={30} color="#FFFFFF" style={styles.profileIcon} />
+            </View>
           </View>
           <Text style={styles.anniversaryTitle}>
             You and {partner_name || 'Partner'} 8th Anniversary
@@ -340,16 +339,34 @@ const styles = StyleSheet.create({
   profileImages: {
     flexDirection: "row",
     marginBottom: 10,
+    alignItems: "center",
   },
-  profileImage: {
+  profileImageContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: "#333333",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
     borderColor: "#000000",
   },
+  profileIcon: {
+    marginBottom: -2,
+  },
+  heartIcon: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "#222",
+    borderRadius: 10,
+    padding: 2,
+    zIndex: 2,
+  },
   secondProfileImage: {
     marginLeft: -15,
+    borderColor: "#000000",
+    zIndex: 1,
   },
   anniversaryTitle: {
     fontSize: 16,
