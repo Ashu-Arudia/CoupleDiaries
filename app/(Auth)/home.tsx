@@ -167,12 +167,18 @@ export default function HomeScreen() {
                   style={[styles.image, styles.backImage]}
                 />
               </View>
-              <View style={styles.box}>
+              <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative' }]}>
                 <Text
                   style={[
                     styles.cardTitle,
-                    { marginLeft: -35, marginTop: -30, fontSize: 20 },
+                    {
+                      fontSize: 20,
+                      flexWrap: 'wrap',
+                      // textAlign: 'center',
+                      width: '90%',
+                    },
                   ]}
+                  numberOfLines={undefined}
                 >
                   You and {partner_name || 'Partner'}'s 8th Anniversary
                 </Text>
@@ -584,12 +590,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   box: {
-    width: "80%",
-    height: 80,
+    width: "85%",
+    minHeight: 80,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     marginLeft: -10,
+    paddingHorizontal: 15,
+    paddingVertical: 20,
   },
   image: {
     width: 60,
@@ -662,6 +670,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
     marginBottom: 10,
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   cardText: {
     color: "#FFFFFF",
