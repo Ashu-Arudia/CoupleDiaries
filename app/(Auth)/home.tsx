@@ -25,7 +25,6 @@ import { useUser } from "../UserContext";
 import { Card, useAppStore } from "./store";
 
 const { width, height } = Dimensions.get("window");
-const ANNIVERSARY_DATE = new Date("2023-06-15");
 
 export default function HomeScreen() {
   const [days, setDays] = useState(0);
@@ -188,26 +187,35 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
-      const today = new Date();
-      let nextAnniversary = new Date(ANNIVERSARY_DATE);
-      nextAnniversary.setFullYear(today.getFullYear());
+      // Use date from Firebase or fallback to today's date if not available
+      const anniversaryDateString = date || "2023-06-15"; // Fallback to hardcoded date if not set
+      const ANNIVERSARY_DATE = new Date(anniversaryDateString);
 
+      const today = new Date();
+
+      // Create next anniversary date with the same month and day in current/next year
+      let nextAnniversary = new Date(today.getFullYear(),
+                                    ANNIVERSARY_DATE.getMonth(),
+                                    ANNIVERSARY_DATE.getDate(),
+                                    0, 0, 0, 0); // Set to midnight for precise calculations
+
+      // If the anniversary has already passed this year, set it to next year
       if (today > nextAnniversary) {
         nextAnniversary.setFullYear(today.getFullYear() + 1);
       }
 
+      // Calculate precise time difference in milliseconds
       const timeDifference = nextAnniversary.getTime() - today.getTime();
 
       if (timeDifference > 0) {
-        const daysRemaining = Math.floor(
-          timeDifference / (1000 * 60 * 60 * 24)
-        );
-        const hoursRemaining = Math.floor(
-          (timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-        const minutesRemaining = Math.floor(
-          (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
-        );
+        // Convert milliseconds to days, hours, minutes
+        const totalSeconds = Math.floor(timeDifference / 1000);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        const totalHours = Math.floor(totalMinutes / 60);
+
+        const daysRemaining = Math.floor(totalHours / 24);
+        const hoursRemaining = totalHours % 24; // This gives hours remaining after removing full days
+        const minutesRemaining = totalMinutes % 60; // This gives minutes remaining after removing full hours
 
         setDays(daysRemaining);
         setHours(hoursRemaining);
@@ -218,7 +226,10 @@ export default function HomeScreen() {
         setMinutes(0);
       }
 
+      // Calculate years since anniversary
       let yearsSince = today.getFullYear() - ANNIVERSARY_DATE.getFullYear();
+
+      // Adjust if this year's anniversary hasn't happened yet
       if (
         today.getMonth() < ANNIVERSARY_DATE.getMonth() ||
         (today.getMonth() === ANNIVERSARY_DATE.getMonth() &&
@@ -226,13 +237,15 @@ export default function HomeScreen() {
       ) {
         yearsSince -= 1;
       }
+
       setYears(yearsSince);
     };
 
     calculateTimeRemaining();
+    // Recalculate every minute to keep the countdown accurate
     const intervalId = setInterval(calculateTimeRemaining, 60000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [date]); // Add date as dependency so calculation updates when date changes
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -436,6 +449,20 @@ export default function HomeScreen() {
     setShowDatePicker(true);
   };
 
+  const getOrdinalNum = (n: number) => {
+    if (n === 0) return "upcoming"; // If it's 0 years, show "upcoming" instead of "0th"
+
+    let suffix = "th";
+    if (n % 100 < 11 || n % 100 > 13) {
+      switch (n % 10) {
+        case 1: suffix = "st"; break;
+        case 2: suffix = "nd"; break;
+        case 3: suffix = "rd"; break;
+      }
+    }
+    return n + suffix;
+  };
+
   const renderContent = () => {
     if (showNotifications) {
       // Render the notifications page
@@ -518,7 +545,7 @@ export default function HomeScreen() {
                   ]}
                   numberOfLines={undefined}
                 >
-                  You and {partner_name || 'Partner'}'s 8th Anniversary
+                  You and {partner_name || 'Partner'}'s {getOrdinalNum(years)} Anniversary
                 </Text>
                 <View style={styles.boxImg}>
                   <Image
