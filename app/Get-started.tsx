@@ -1,18 +1,18 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import * as Progress from "react-native-progress";
-import { auth, setUserNameAndAge } from "./firebase";
+import { auth, setDetails } from "./firebase";
 import { useUser } from "./UserContext";
 const { width, height } = Dimensions.get("window");
 
@@ -49,12 +49,20 @@ export default function App() {
 
   const handleNext = async () => {
     if (!validateStep()) return;
-    if (currentStep == 1) {
+    if (currentStep == 2) {
       setLoading(true);
       try {
         const user = auth().currentUser;
         if (user) {
-          const success = await setUserNameAndAge(user.uid, name, parseInt(age) || 0);
+          const success = await setDetails(
+            user.uid,
+            name,
+            parseInt(age) || 0,
+            partner_name,
+            partner_email,
+            date,
+            selectedGender
+          );
           if (success) {
             console.log("User data saved successfully");
             // Refresh the user data in the context
@@ -73,7 +81,7 @@ export default function App() {
       } finally {
         setLoading(false);
       }
-    } else if (currentStep == 2) {
+    } else if (currentStep == 1) {
       setCurrentStep(currentStep + 1);
     } else {
       router.replace("/(Auth)/home");
