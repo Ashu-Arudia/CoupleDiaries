@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   BackHandler,
   Dimensions,
+  FlatList,
   Image,
   Keyboard,
   Modal,
@@ -16,7 +17,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useUser } from "../UserContext";
 import { Card, useAppStore } from "./store";
@@ -51,6 +52,26 @@ export default function HomeScreen() {
     partner_email: false
   });
 
+  // Date picker states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth());
+  const [pickerDay, setPickerDay] = useState(1);
+
+  // Month names array for date picker
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Generate years for date picker (100 years in the past)
+  const yearsList = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+
+  // Get days in a month
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
   // Use the user context hook instead of local state
   const { userData, updateUserData } = useUser();
   const { username, age, date, partner_name, partner_email, profileImageURL, isLoading, error } = userData;
@@ -59,6 +80,11 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const { cards, currentContent, setCurrentContent } = useAppStore();
+
+  // FlatList refs for scrolling
+  const yearListRef = useRef<FlatList>(null);
+  const monthListRef = useRef<FlatList>(null);
+  const dayListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -248,6 +274,66 @@ export default function HomeScreen() {
       ...editableFields,
       [field]: !editableFields[field as keyof typeof editableFields]
     });
+  };
+
+  // Date picker handlers
+  const onDateChange = (year: number, month: number, day: number) => {
+    const dateObj = new Date(year, month, day);
+
+    // Format the date as YYYY-MM-DD for storing
+    const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setEditedUserData({...editedUserData, date: formattedDate});
+
+    // Close the date picker
+    setShowDatePicker(false);
+  };
+
+  const showDatePickerModal = () => {
+    // If there's already a date, parse it to initialize the picker
+    if (editedUserData.date) {
+      try {
+        const [year, month, day] = editedUserData.date.split('-').map(Number);
+        setPickerYear(year);
+        setPickerMonth(month - 1); // Month is 0-indexed in JS Date
+        setPickerDay(day);
+
+        // Use setTimeout to ensure the state is updated before scrolling
+        setTimeout(() => {
+          const yearIndex = yearsList.findIndex(y => y === year);
+          const monthIndex = month - 1;
+          const dayIndex = day - 1;
+
+          if (yearIndex >= 0 && yearListRef.current) {
+            try {
+              yearListRef.current.scrollToIndex({ index: yearIndex, animated: false });
+            } catch (e) {
+              console.log('Could not scroll to year: ', e);
+            }
+          }
+          if (monthListRef.current) {
+            try {
+              monthListRef.current.scrollToIndex({ index: monthIndex, animated: false });
+            } catch (e) {
+              console.log('Could not scroll to month: ', e);
+            }
+          }
+          if (dayListRef.current) {
+            try {
+              dayListRef.current.scrollToIndex({ index: dayIndex, animated: false });
+            } catch (e) {
+              console.log('Could not scroll to day: ', e);
+            }
+          }
+        }, 100);
+      } catch (e) {
+        // If the date format is invalid, set to current date
+        const today = new Date();
+        setPickerYear(today.getFullYear());
+        setPickerMonth(today.getMonth());
+        setPickerDay(today.getDate());
+      }
+    }
+    setShowDatePicker(true);
   };
 
   const renderContent = () => {
@@ -777,18 +863,26 @@ export default function HomeScreen() {
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Anniversary Date</Text>
                 <View style={styles.editFieldContainer}>
-                  <TextInput
+                  <TouchableOpacity
                     style={[
                       styles.modalInput,
-                      { flex: 1 },
+                      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
                       editableFields.date ? styles.editableInput : {}
                     ]}
-                    value={editedUserData.date}
-                    onChangeText={(text) => setEditedUserData({...editedUserData, date: text})}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#666"
-                    editable={editableFields.date}
-                  />
+                    onPress={() => {
+                      if (editableFields.date) {
+                        showDatePickerModal();
+                      }
+                    }}
+                    disabled={!editableFields.date}
+                  >
+                    <Text style={{ color: editedUserData.date ? '#FFFFFF' : '#666666' }}>
+                      {editedUserData.date || 'YYYY-MM-DD'}
+                    </Text>
+                    {editableFields.date && (
+                      <MaterialIcons name="calendar-today" size={20} color="#FFAA2C" />
+                    )}
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.editIconContainer}
                     onPress={() => toggleFieldEdit('date')}
@@ -866,6 +960,141 @@ export default function HomeScreen() {
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.datePickerModalOverlay}>
+          <View style={styles.datePickerContainer}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerTitle}>Select Anniversary Date</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <MaterialIcons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.datePickerContent}>
+              {/* Year Picker */}
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Year</Text>
+                <FlatList
+                  data={yearsList}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerItem,
+                        pickerYear === item && styles.pickerItemSelected
+                      ]}
+                      onPress={() => {
+                        setPickerYear(item);
+                        // Adjust day if necessary for the new month/year
+                        const daysInMonth = getDaysInMonth(item, pickerMonth);
+                        if (pickerDay > daysInMonth) {
+                          setPickerDay(daysInMonth);
+                        }
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerItemText,
+                          pickerYear === item && styles.pickerItemTextSelected
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item) => item.toString()}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.picker}
+                  ref={yearListRef}
+                />
+              </View>
+
+              {/* Month Picker */}
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Month</Text>
+                <FlatList
+                  data={monthNames}
+                  renderItem={({ item, index }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerItem,
+                        pickerMonth === index && styles.pickerItemSelected
+                      ]}
+                      onPress={() => {
+                        setPickerMonth(index);
+                        // Adjust day if necessary for the new month
+                        const daysInMonth = getDaysInMonth(pickerYear, index);
+                        if (pickerDay > daysInMonth) {
+                          setPickerDay(daysInMonth);
+                        }
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerItemText,
+                          pickerMonth === index && styles.pickerItemTextSelected
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item) => item}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.picker}
+                  ref={monthListRef}
+                />
+              </View>
+
+              {/* Day Picker */}
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>Day</Text>
+                <FlatList
+                  data={Array.from(
+                    { length: getDaysInMonth(pickerYear, pickerMonth) },
+                    (_, i) => i + 1
+                  )}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerItem,
+                        pickerDay === item && styles.pickerItemSelected
+                      ]}
+                      onPress={() => setPickerDay(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerItemText,
+                          pickerDay === item && styles.pickerItemTextSelected
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item) => item.toString()}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.picker}
+                  ref={dayListRef}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.datePickerConfirmButton}
+              onPress={() => onDateChange(pickerYear, pickerMonth, pickerDay)}
+            >
+              <Text style={styles.datePickerConfirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1415,6 +1644,80 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  datePickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  datePickerContainer: {
+    width: '90%',
+    backgroundColor: '#222',
+    borderRadius: 15,
+    overflow: 'hidden',
+    maxHeight: '80%',
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
+  },
+  datePickerTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  datePickerContent: {
+    flexDirection: 'row',
+    padding: 10,
+  },
+  pickerColumn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  pickerLabel: {
+    color: '#FFAA2C',
+    fontSize: 16,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
+  picker: {
+    height: 200,
+    width: '100%',
+  },
+  pickerItem: {
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  pickerItemSelected: {
+    backgroundColor: 'rgba(255, 170, 44, 0.2)',
+  },
+  pickerItemText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  pickerItemTextSelected: {
+    color: '#FFAA2C',
+    fontWeight: 'bold',
+  },
+  datePickerConfirmButton: {
+    backgroundColor: '#FFAA2C',
+    paddingVertical: 12,
+    margin: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  datePickerConfirmButtonText: {
+    color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
   },
