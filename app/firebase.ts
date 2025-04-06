@@ -1,7 +1,5 @@
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDoYzKQBmFPZxNB1M19WmjQSltephXXzZY",
@@ -11,6 +9,33 @@ const firebaseConfig = {
   messagingSenderId: "507930487102",
   appId: "1:507930487102:web:3b4928fa4fde02cf43246f",
 };
+
+export async function setUserNameAndAge(
+  uid: string,
+  name: string,
+  age: number
+) {
+  try {
+    const userData = {
+      name: name,
+      age: age,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Using a simpler approach for Firestore
+    await firestore()
+      .collection('users')
+      .doc(uid)
+      .set(userData);
+
+    console.log("User data saved successfully to Firestore for UID:", uid);
+    return true;
+  } catch (error: any) {
+    console.error("Error setting name and age:", error.message);
+    // Don't throw the error, just return false
+    return false;
+  }
+}
 
 export async function setDetails(
   uid: string,
@@ -44,17 +69,16 @@ export async function setDetails(
   }
 }
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export async function getUserData(userId: any) {
+export async function getUserData(userId: string) {
   try {
-    // Get the user document
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    // Get the user document using React Native Firebase
+    const userDoc = await firestore()
+      .collection('users')
+      .doc(userId)
+      .get();
 
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
+    if (userDoc.exists) {
+      const userData = userDoc.data();
 
       // Return an object with methods to access specific user data fields
       return {
@@ -62,10 +86,11 @@ export async function getUserData(userId: any) {
         getAllData: () => userData,
 
         // Methods to get specific fields
-        getUsername: () => userData.name || null,
-        getAge: () => userData.age || null,
-        getDate: () =>
-          userData.date || userData.createdAt || userData.joinDate || null,
+        getUsername: () => userData?.name || null,
+        getAge: () => userData?.age || null,
+        getDate: () => userData?.date || userData?.createdAt || userData?.joinDate || null,
+        getPartner_name: () => userData?.partner_name || null,
+        getPartner_email: () => userData?.partner_email || null
       };
     } else {
       console.log("No such user!");
@@ -77,10 +102,5 @@ export async function getUserData(userId: any) {
   }
 }
 
-// Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-
-// Export the app instance and other services if needed
-// export { app };
-// export const auth = getAuth(app);
+// Export the auth instance and other services
 export { auth, firestore };
