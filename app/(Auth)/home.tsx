@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Use the user context hook instead of local state
   const { userData } = useUser();
@@ -151,6 +153,56 @@ export default function HomeScreen() {
   };
 
   const renderContent = () => {
+    if (showNotifications) {
+      // Render the notifications page
+      return (
+        <View style={styles.notificationsContainer}>
+          <View style={styles.notificationHeader}>
+            <TouchableOpacity onPress={() => setShowNotifications(false)}>
+              <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.notificationHeaderTitle}>Notifications</Text>
+            <View style={{width: 24}} />
+          </View>
+          <ScrollView contentContainerStyle={styles.notificationsContent}>
+            {/* Sample notifications - you can replace with real data */}
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationIcon}>
+                <MaterialIcons name="favorite" size={24} color="#FF4081" />
+              </View>
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationTitle}>Anniversary Coming Up!</Text>
+                <Text style={styles.notificationText}>Your anniversary is in {days} days</Text>
+                <Text style={styles.notificationTime}>2 hours ago</Text>
+              </View>
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationIcon}>
+                <MaterialIcons name="chat" size={24} color="#2196F3" />
+              </View>
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationTitle}>New Message</Text>
+                <Text style={styles.notificationText}>{partner_name || 'Your partner'} sent you a message</Text>
+                <Text style={styles.notificationTime}>Yesterday</Text>
+              </View>
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationIcon}>
+                <MaterialIcons name="event-note" size={24} color="#4CAF50" />
+              </View>
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationTitle}>New Memory Added</Text>
+                <Text style={styles.notificationText}>{partner_name || 'Your partner'} added a new memory</Text>
+                <Text style={styles.notificationTime}>2 days ago</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      );
+    }
+
     switch (currentContent) {
       case "default":
         return (
@@ -366,22 +418,22 @@ export default function HomeScreen() {
   };
 
   // Add this where you want to display the user profile
-  const renderUserProfile = () => {
-    if (isLoading) return <Text style={styles.loadingText}>Loading user information...</Text>;
-    if (error) return <Text style={styles.errorText}>{error}</Text>;
+  // const renderUserProfile = () => {
+  //   if (isLoading) return <Text style={styles.loadingText}>Loading user information...</Text>;
+  //   if (error) return <Text style={styles.errorText}>{error}</Text>;
 
-    return (
-      <View style={styles.profileContainer}>
-        <Text style={styles.profileText}>Name: {username || 'Not set'}</Text>
-        <Text style={styles.profileText}>Age: {age || 'Not set'}</Text>
-        {date && <Text style={styles.profileText}>Date: {date}</Text>}
-        <Text style={styles.profileText}>Partner: {partner_name || 'Not set'}</Text>
-      </View>
-    );
-  };
+  //   return (
+  //     <View style={styles.profileContainer}>
+  //       <Text style={styles.profileText}>Name: {username || 'Not set'}</Text>
+  //       <Text style={styles.profileText}>Age: {age || 'Not set'}</Text>
+  //       {date && <Text style={styles.profileText}>Date: {date}</Text>}
+  //       <Text style={styles.profileText}>Partner: {partner_name || 'Not set'}</Text>
+  //     </View>
+  //   );
+  // };
   return (
     <View style={styles.container}>
-      {currentContent === "default" ? (
+      {currentContent === "default" && !showNotifications ? (
         <View style={styles.header}>
           <TouchableOpacity style={styles.profilePicContainer}>
             <Image
@@ -393,18 +445,21 @@ export default function HomeScreen() {
             source={require("../../assets/images/logo.png")}
             style={styles.logo}
           />
-          <TouchableOpacity style={styles.notificationButton}>
-            <Image
-              source={require("../../assets/images/notification.png")}
-              style={styles.notificationIcon}
-            />
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => setShowNotifications(true)}
+          >
+            <MaterialIcons name="notifications" size={28} color="#FFFFFF" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>3</Text>
+            </View>
           </TouchableOpacity>
         </View>
       ) : (
         <View></View>
       )}
       {renderContent()}
-      {!isKeyboardVisible && (
+      {!isKeyboardVisible && !showNotifications && (
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={styles.navButton}
@@ -636,9 +691,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  notificationIcon: {
-    width: 55,
-    height: 55,
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF4081',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   card: {
     gap: 10,
@@ -774,5 +841,60 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#FF0000",
     fontSize: 16,
+  },
+  notificationsContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: '#111',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  notificationHeaderTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  notificationsContent: {
+    paddingVertical: 10,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+  notificationIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  notificationText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  notificationTime: {
+    color: '#888888',
+    fontSize: 12,
   },
 });
