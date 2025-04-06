@@ -189,10 +189,10 @@ export default function App() {
                 </View>
               ) : (
                 <View style={styles.placeholderContainer}>
-                  <Image
-                    source={require("../assets/images/ppic2.jpg")}
-                    style={styles.imagepic}
-                  />
+            <Image
+              source={require("../assets/images/ppic2.jpg")}
+              style={styles.imagepic}
+            />
                   <TouchableOpacity onPress={pickImage} style={styles.cameraIconContainer}>
                     <MaterialIcons name="add-a-photo" size={24} color="#FFFFFF" />
                   </TouchableOpacity>

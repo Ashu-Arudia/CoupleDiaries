@@ -5,8 +5,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   BackHandler,
   Dimensions,
+  Easing,
   FlatList,
   Image,
   Keyboard,
@@ -85,6 +87,104 @@ export default function HomeScreen() {
   const yearListRef = useRef<FlatList>(null);
   const monthListRef = useRef<FlatList>(null);
   const dayListRef = useRef<FlatList>(null);
+
+  // Hearts animation
+  type AnimatedItem = {
+    id: number;
+    x: number;
+    y: Animated.Value;
+    rotate: Animated.Value;
+    size: number;
+    speed: number;
+    color: string;
+  };
+
+  const [animatedItems, setAnimatedItems] = useState<AnimatedItem[]>([]);
+
+  // Create a constant stream of falling items
+  useEffect(() => {
+    // Add initial items - reducing initial count
+    createItems(3);
+
+    // Add new items at a constant rate - longer interval and fewer items
+    const intervalId = setInterval(() => {
+      // Only add 1 heart at a time for lower density
+      createItems(1);
+    }, 3000); // Much slower interval (3 seconds between new hearts)
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const createItems = (count: number) => {
+    const boxWidth = width * 0.9; // Width of the whole card
+    const newItems: AnimatedItem[] = [];
+
+    const heartColors = ['#FF4081', '#FF6B9D', '#FF97B7', '#FFCAD4'];
+
+    for (let i = 0; i < count; i++) {
+      const id = Date.now() + i;
+      const x = Math.random() * boxWidth; // Randomize across the full card width
+      const y = new Animated.Value(-20); // Start at the top of the card
+      const rotate = new Animated.Value(0);
+      const size = 8 + Math.random() * 10; // Slightly smaller hearts
+      // Much slower falling speed for a gentler effect
+      const speed = 8000 + Math.random() * 4000; // 8-12 seconds to fall
+      const color = heartColors[Math.floor(Math.random() * heartColors.length)];
+
+      newItems.push({ id, x, y, rotate, size, speed, color });
+
+      // Create leaf-like falling animation - even slower and more gentle
+      Animated.parallel([
+        Animated.timing(y, {
+          toValue: 350, // Fall to the bottom of the entire card
+          duration: speed,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1), // More natural movement
+          useNativeDriver: true
+        }),
+        Animated.timing(rotate, {
+          toValue: Math.random() > 0.5 ? 1 : -1, // Less rotation for gentler effect
+          duration: speed,
+          easing: Easing.linear,
+          useNativeDriver: true
+        })
+      ]).start(() => {
+        // Remove item when animation is complete
+        setAnimatedItems(currentItems => currentItems.filter(item => item.id !== id));
+      });
+    }
+
+    setAnimatedItems(currentItems => [...currentItems, ...newItems]);
+  };
+
+  // Render animated heart leaf
+  const renderAnimatedItem = (item: AnimatedItem) => {
+    return (
+      <Animated.View
+        key={item.id}
+        style={[
+          styles.animatedItemContainer,
+          {
+            left: item.x,
+            transform: [
+              { translateY: item.y },
+              // Add a gentle swaying motion with horizontal oscillation
+              { translateX: item.y.interpolate({
+                inputRange: [0, 50, 100, 150, 200, 250, 300, 350],
+                outputRange: [0, 20, -15, 10, -20, 15, -10, 5],
+              })},
+              { rotate: item.rotate.interpolate({
+                  inputRange: [0, 1, 2],
+                  outputRange: ['0deg', '180deg', '360deg']
+                })
+              }
+            ]
+          }
+        ]}
+      >
+        <MaterialIcons name="favorite" size={item.size} color={item.color} />
+      </Animated.View>
+    );
+  };
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -392,25 +492,28 @@ export default function HomeScreen() {
         return (
           <ScrollView contentContainerStyle={styles.cardsContainer}>
             {/* {renderUserProfile()} */}
-            <View style={[styles.card]}>
+           <View style={[styles.card]}>
+              {/* Hearts animation moved to parent card container */}
+              {animatedItems.map(item => renderAnimatedItem(item))}
               <View style={[styles.container2, styles.box]}>
                 <View style={[styles.profileImageContainer, styles.backImage]}>
                   <MaterialIcons name="person" size={40} color="#FFFFFF" style={styles.profileIcon} />
-                </View>
+              </View>
                 <View style={[styles.profileImageContainer, styles.frontImage]}>
                   <MaterialIcons name="person" size={40} color="#FFFFFF" style={styles.profileIcon} />
                   <MaterialIcons name="favorite" size={24} color="#FF4081" style={styles.heartIcon} />
                 </View>
               </View>
-              <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative' }]}>
+              <View style={[styles.box, { paddingTop: 20, paddingBottom: 20, position: 'relative', overflow: 'hidden' }]}>
+                {/* Remove hearts from here */}
                 <Text
                   style={[
                     styles.cardTitle,
                     {
                       fontSize: 20,
                       flexWrap: 'wrap',
-                      // textAlign: 'center',
                       width: '90%',
+                      zIndex: 5, // Ensure text is above hearts
                     },
                   ]}
                   numberOfLines={undefined}
@@ -424,6 +527,7 @@ export default function HomeScreen() {
                   />
                 </View>
               </View>
+
               <View style={styles.box}>
                 <View style={styles.row}>
                   <View
@@ -442,7 +546,7 @@ export default function HomeScreen() {
                   <View style={[styles.column, { marginTop: -60 }]}>
                     <Text style={styles.text1}>Hours</Text>
                     <Text style={styles.text}>{hours}</Text>
-                  </View>
+                  </View >
                   <View
                     style={[
                       styles.column,
@@ -675,10 +779,10 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.profilePicContainer} onPress={handleProfilePicPress}>
             <View style={styles.headerProfileContainer}>
               {profileImageURL ? (
-                <Image
+            <Image
                   source={{ uri: profileImageURL }}
                   style={{ width: 45, height: 45, borderRadius: 22.5 }}
-                />
+            />
               ) : (
                 <MaterialIcons name="person" size={32} color="#FFFFFF" />
               )}
@@ -1720,5 +1824,9 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  animatedItemContainer: {
+    position: 'absolute',
+    zIndex: 2, // Keep this below the text but visible
   },
 });
