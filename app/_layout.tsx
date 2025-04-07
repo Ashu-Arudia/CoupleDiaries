@@ -5,11 +5,23 @@ import { BackHandler, View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { UserProvider } from "./UserContext";
 
+// Define routes at module scope for consistent access
+const ROUTES = {
+  HOME: "(Auth)/home",
+  GET_STARTED: "Get-started",
+  EMAIL_VERIFICATION: "EmailVerification",
+  INDEX: "index"
+};
+
 export default function Layout() {
   const [initializing, setinitializing] = useState(true);
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
   const router = useRouter();
   const segments = useSegments();
+  // Add navigation lock to prevent navigation loops
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [setupCompleted, setSetupCompleted] = useState<boolean | null>(null);
+  const [lastNavigationTime, setLastNavigationTime] = useState(0);
 
   // Function to handle authentication state changes
   const onAuthStateChanged = (user: FirebaseAuthTypes.User | null) => {
@@ -71,7 +83,7 @@ export default function Layout() {
     if (!user) {
       // Only redirect from protected routes to the login
       if (inAuthGroup || isGettingStarted) {
-        router.replace("/");
+        router.replace("index");
       }
       // Don't redirect if already on public routes (index, signup, verification)
       return;
@@ -82,43 +94,134 @@ export default function Layout() {
       // Check if we need to determine if setup is completed
       const checkSetupStatus = async () => {
         try {
-          // Get user data from Firestore to check setup status
-          const firestore = require('@react-native-firebase/firestore').default();
-          const userDoc = await firestore.collection('users').doc(user.uid).get();
-          const userData = userDoc.data();
+          // Get current time
+          const now = Date.now();
 
-          // Check if setup is completed
-          const setupCompleted = userData?.setupCompleted === true;
+          // Prevent navigation if less than 2 seconds have passed since last navigation
+          if (now - lastNavigationTime < 2000) {
+            console.log("Too soon to navigate again. Waiting...");
+            return;
+          }
 
-          console.log("User setup status:", setupCompleted ? "Completed" : "Not completed");
+          // Prevent navigation loop
+          if (isNavigating) {
+            console.log("Navigation already in progress, skipping checks");
+            return;
+          }
 
-          if (isEmailVerification) {
-            // If verified but on verification screen, go to Get-started
-            router.replace("Get-started");
+          // Don't navigate if we're already on the home screen
+          if (isOnHomeScreen()) {
+            console.log("Already on home screen, no navigation needed");
+            return;
           }
-          // If user has completed setup but is still on Get-started page, send to home
-          else if (isGettingStarted && setupCompleted) {
-            console.log("Setup completed but still on Get-started, redirecting to home");
-            router.replace("/(Auth)/home");
+
+          // Log the current navigation attempt for debugging
+          console.log("Navigation check: User verified, checking setup status");
+          console.log("Current segments:", segments);
+
+          // Safer navigation with logging
+          const navigateTo = (route: string) => {
+            console.log(`Safe navigation to route: ${route}`);
+            setLastNavigationTime(now);
+            setIsNavigating(true);
+            router.replace(route);
+          };
+
+          // Fix all route paths to match expected format
+          if (segments[0] === "Get-started" && setupCompleted === true) {
+            console.log("On successful Get-started page, forcing navigation to home");
+            setLastNavigationTime(now);
+            setIsNavigating(true);
+            navigateTo(ROUTES.HOME);
+            return;
           }
-          // IMPORTANT: Don't redirect away from Get-started if not completed
-          else if (!inAuthGroup && !isGettingStarted && !isSignupOrIndex && !setupCompleted) {
-            // Not completed setup - send to Get-started
-            router.replace("Get-started");
+
+          // In the window.setupCompleted check
+          // @ts-ignore - This is a controlled hack to access window property
+          if (typeof window !== 'undefined' && window.setupCompleted === true) {
+            console.log("Detected global setup completed flag, navigating to home");
+            setSetupCompleted(true);
+            navigateTo(ROUTES.HOME);
+            return;
           }
-          else if (!inAuthGroup && !isGettingStarted && !isSignupOrIndex && setupCompleted) {
-            // Setup completed - send to home
-            router.replace("/(Auth)/home");
+
+          // Only do full check if we haven't determined setup status yet
+          if (setupCompleted === null) {
+            try {
+              console.log("Checking Firestore for setup completion status");
+
+              // Get user data from Firestore to check setup status
+              const firestore = require('@react-native-firebase/firestore').default();
+              const userDoc = await firestore.collection('users').doc(user.uid).get();
+              const userData = userDoc.data();
+
+              // Log the data for debugging
+              console.log("User data from Firestore:", JSON.stringify(userData, null, 2));
+
+              // Check if setup is completed - look for various indicators
+              const isSetupCompleted =
+                userData?.setupCompleted === true ||
+                (userData?.name !== undefined &&
+                 userData?.partner_name !== undefined &&
+                 userData?.date !== undefined);
+
+              console.log("Setup completed determination:", isSetupCompleted);
+              setSetupCompleted(isSetupCompleted);
+
+              // Handle navigation based on setup status
+              if (isSetupCompleted) {
+                // If verified and setup is complete, go to home unless already there
+                if (!isOnHomeScreen()) {
+                  console.log("Setup completed, navigating to home");
+                  navigateTo(ROUTES.HOME);
+                }
+              } else {
+                // Not completed setup - verify vs. get-started routing
+                if (segments[0] === "EmailVerification") {
+                  // Check if setup is already completed before deciding where to navigate
+                  const setupIsCompleted = isSetupCompleted || setupCompleted === true;
+
+                  if (setupIsCompleted) {
+                    console.log("User verified and setup completed, navigating from EmailVerification to home");
+                    setLastNavigationTime(now);
+                    setIsNavigating(true);
+                    router.replace(ROUTES.HOME);
+                  } else {
+                    console.log("User verified but setup not completed, navigating from EmailVerification to Get-started");
+                    setLastNavigationTime(now);
+                    setIsNavigating(true);
+                    router.replace(ROUTES.GET_STARTED);
+                  }
+                } else if (segments[0] !== "Get-started" && !isSignupOrIndex) {
+                  console.log("Setup not completed, going to Get-started");
+                  setLastNavigationTime(now);
+                  setIsNavigating(true);
+                  router.replace(ROUTES.GET_STARTED);
+                }
+              }
+            } catch (error) {
+              console.error("Error checking setup from Firestore:", error);
+
+              // Default to home to avoid loops
+              if (!segments[0]?.includes("home") && !isSignupOrIndex) {
+                console.log("Error occurred, defaulting to home route");
+                setLastNavigationTime(now);
+                setIsNavigating(true);
+                router.replace(ROUTES.HOME);
+              }
+            }
           }
-          // Otherwise stay on current route (already in correct place)
+
+          // Reset navigation lock after a reasonable time
+          setTimeout(() => {
+            if (isNavigating) {
+              console.log("Resetting navigation lock");
+              setIsNavigating(false);
+            }
+          }, 5000);
+
         } catch (error) {
-          console.error("Error checking setup status:", error);
-          // If error, use simpler logic as fallback
-          if (isEmailVerification) {
-            router.replace("Get-started");
-          } else if (!inAuthGroup && !isGettingStarted && !isSignupOrIndex) {
-            router.replace("/(Auth)/home");
-          }
+          console.error("Fatal navigation error:", error);
         }
       };
 
@@ -128,9 +231,10 @@ export default function Layout() {
       // User is not verified - verify email first
       if (inAuthGroup) {
         // If trying to access protected routes without verification, redirect
-        router.replace("/EmailVerification");
+        console.log("User not verified, redirecting to verification");
+        router.replace(ROUTES.EMAIL_VERIFICATION);
       }
-      // If already on email verification or Get-started, stay there
+      // If already on email verification or signup pages, stay there
     }
   }, [user, initializing, segments]);
 
@@ -149,6 +253,30 @@ export default function Layout() {
 
     return () => backHandler.remove();
   }, [user, segments]);
+
+  // Add a safe way to check which screen we're on
+  const isOnScreen = (screenPath: string): boolean => {
+    return segments.includes(screenPath);
+  };
+
+  const isOnHomeScreen = (): boolean => {
+    // Use segments.at() which is safer than direct array access
+    return segments.length > 1 &&
+           segments.at(0) === "(Auth)" &&
+           segments.at(1) === "home";
+  };
+
+  // Check segments format
+  useEffect(() => {
+    if (segments.length > 0) {
+      console.log("Current segment format:", JSON.stringify(segments));
+      // Log detailed segment info to fix parsing
+      console.log("First segment:", segments.at(0));
+      if (segments.length > 1) {
+        console.log("Second segment:", segments.at(1));
+      }
+    }
+  }, [segments]);
 
   if (initializing) {
     return (

@@ -500,7 +500,7 @@ export default function HomeScreen() {
   };
 
   const getOrdinalNum = (n: number) => {
-    if (n === 0) return "upcoming"; // If it's 0 years, show "upcoming" instead of "0th"
+    if (n <= 0) return "upcoming"; // If it's 0 years or 1st anniversary, show "upcoming"
 
     let suffix = "th";
     if (n % 100 < 11 || n % 100 > 13) {
@@ -533,7 +533,11 @@ export default function HomeScreen() {
               </View>
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationTitle}>Anniversary Coming Up!</Text>
-                <Text style={styles.notificationText}>Your anniversary is in {days} days</Text>
+                <Text style={styles.notificationText}>
+                  {years <= 0
+                    ? `Your upcoming anniversary is in ${days} days`
+                    : `Your anniversary is in ${days} days`}
+                </Text>
                 <Text style={styles.notificationTime}>2 hours ago</Text>
               </View>
             </View>

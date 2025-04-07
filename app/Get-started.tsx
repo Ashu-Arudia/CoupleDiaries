@@ -190,34 +190,82 @@ export default function App() {
       setLoading(true);
 
       try {
-        // Use a direct hard navigation to the home screen
-        console.log("Attempting to navigate to /(Auth)/home");
-
-        // Ensure the user data is correctly set in Firestore before navigation
+        // Force update setupCompleted flag in Firestore to ensure proper navigation
         const user = auth().currentUser;
         if (user) {
-          const firestore = require('@react-native-firebase/firestore').default();
-          await firestore.collection('users').doc(user.uid).update({
-            setupCompleted: true,
-            setupCompletedAt: new Date().toISOString()
-          });
-          console.log("Updated user setup completion status");
+          try {
+            console.log("Updating Firestore with setup completion data...");
+            const firestore = require('@react-native-firebase/firestore').default();
 
-          // Refresh user data one more time to ensure it's current
-          await refreshUserData();
+            // Use set with merge to ensure all required fields exist and do it atomically
+            await firestore.collection('users').doc(user.uid).set({
+              setupCompleted: true,
+              setupCompletedAt: new Date().toISOString(),
+              // Add essential fields in case they're missing
+              name: name || "User",
+              partner_name: partner_name || "Partner",
+              date: date || new Date().toISOString().split('T')[0],
+              // Add a unique timestamp to force update detection
+              _lastUpdated: Date.now()
+            }, { merge: true });
+
+            console.log("Successfully updated user setup completion status");
+
+            // Refresh user data one more time to ensure it's current
+            await refreshUserData();
+
+            // Force a Firestore read to confirm data is saved
+            const updatedDoc = await firestore.collection('users').doc(user.uid).get();
+            console.log("Confirmed data is saved:", updatedDoc.data()?.setupCompleted === true);
+          } catch (err) {
+            console.error("Firestore update error:", err);
+            // Continue even if this fails
+          }
         }
 
-        // Try navigation with a small delay to ensure state updates
-        setTimeout(() => {
-          console.log("Executing delayed navigation to home");
-          router.replace("/(Auth)/home");
-        }, 300);
+        // Set global flag if available (for web)
+        if (typeof window !== 'undefined') {
+          try {
+            // @ts-ignore - This is a hack to communicate with the layout component
+            window.setupCompleted = true;
+            console.log("Set global window.setupCompleted flag to true");
+          } catch (err) {
+            console.error("Failed to set global flag:", err);
+          }
+        }
+
+        // --- FINAL NAVIGATION SOLUTION ---
+
+        // Based on the exact error in the logs, carefully navigate to the correct path
+        console.log("EXECUTING FINAL NAVIGATION TO HOME...");
+        try {
+          // Moving to step 3 is considered completion
+          setCurrentStep(3);
+
+          // Based on log error, the route is without the leading slash
+          // DIRECT NAVIGATION TO SPECIFIC SCREEN, NOT JUST GROUP
+          console.log("Direct navigation to (Auth)/home");
+          router.replace("(Auth)/home");
+
+          // Simple backup - one additional attempt
+          setTimeout(() => {
+            console.log("Final backup navigation attempt...");
+            router.replace("(Auth)/home");
+          }, 2000);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Last resort - show message and try direct navigation
+          alert("Error navigating. Please wait...");
+          setTimeout(() => {
+            router.replace("(Auth)/home");
+          }, 1000);
+        }
       } catch (error) {
-        console.error("Navigation error:", error);
-        // If any error occurs, use another approach with a longer delay
-        alert("Completing setup. You'll be redirected to the home screen shortly.");
+        console.error("Setup completion error:", error);
+        // Show error message and try direct navigation
+        alert("Error completing setup. You'll be redirected to the home screen shortly.");
         setTimeout(() => {
-          router.replace("/(Auth)/home");
+          router.replace("(Auth)/home");
         }, 1000);
       }
     }
